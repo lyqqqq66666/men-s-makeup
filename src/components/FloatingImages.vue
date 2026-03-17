@@ -18,11 +18,11 @@
 import { ref, onMounted } from 'vue'
 
 const images = ref([
-  { src: 'public/images/styles/1.png', alt: 'Portrait 1' },
-  { src: 'public/images/styles/2.png', alt: 'Portrait 2' },
-  { src: 'public/images/styles/3.png', alt: 'Portrait 3' },
-  { src: 'public/images/styles/4.png', alt: 'Portrait 4' },
-  { src: 'public/images/styles/5.png', alt: 'Portrait 5' },
+  { src: '/images/styles/1.png', alt: 'Portrait 1' },
+  { src: '/images/styles/2.png', alt: 'Portrait 2' },
+  { src: '/images/styles/3.png', alt: 'Portrait 3' },
+  { src: '/images/styles/4.png', alt: 'Portrait 4' },
+  { src: '/images/styles/5.png', alt: 'Portrait 5' },
 ])
 
 // Define zones to keep center clear (Left 25%-75% is restricted)

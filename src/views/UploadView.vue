@@ -6,6 +6,12 @@
       @mouseenter="isHovering = true" 
       @mouseleave="isHovering = false"
     >
+      <div class="back-btn-wrapper">
+        <el-button link :icon="ArrowLeft" @click="router.back()" class="custom-back-btn">
+          返回上一页
+        </el-button>
+      </div>
+
       <h2 class="page-title">上传人像照片</h2>
       <p class="page-subtitle">请上传一张清晰的正面人像照片，我们将为您进行智能矫正与美妆</p>
       
@@ -29,7 +35,7 @@
 import { ref } from 'vue'
 import ImageUpload from '../components/ImageUpload.vue'
 import ModernBackground from '../components/ModernBackground.vue'
-import { InfoFilled } from '@element-plus/icons-vue'
+import { InfoFilled, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElLoading } from 'element-plus'
 
@@ -92,6 +98,23 @@ const handleUploadSuccess = async (data: { file: File, url: string }) => {
   box-shadow: 0 20px 50px rgba(0,0,0,0.05);
   border: 1px solid rgba(0, 0, 0, 0.05);
   animation: fadeIn 0.8s ease-out;
+}
+
+.back-btn-wrapper {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+}
+
+.custom-back-btn {
+  font-size: 14px;
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+.custom-back-btn:hover {
+  color: #10b981;
+  transform: translateX(-2px);
 }
 
 .page-title {

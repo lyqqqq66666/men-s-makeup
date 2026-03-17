@@ -18,37 +18,108 @@
 
       <main class="main-content">
         <div class="hero-section">
-          <h1 class="page-title">绅士精选</h1>
-          <p class="subtitle">专为男士打造的高端护肤与美妆系列</p>
+          <h1 class="page-title">适合你的商品推荐</h1>
+          <p class="subtitle">根据你的季型和色系为你优先筛选</p>
         </div>
 
-        <div class="products-grid">
-          <el-row :gutter="30">
-            <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="item in products" :key="item.id">
-              <div class="product-card">
-                <div class="product-image">
-                  <div class="product-img-container">
-                    <img :src="item.image" :alt="item.name" class="real-product-img" />
-                  </div>
-                  <div class="sku-badge">{{ item.sku }}</div>
-                  <div class="overlay">
-                    <el-button type="primary" plain round @click="handleTryOn(item)">立即试用</el-button>
-                  </div>
-                </div>
-                <div class="product-info">
-                  <h3 class="product-name">{{ item.name }}</h3>
-                  <p class="product-desc">{{ item.desc }}</p>
-                  <div class="price-action-row">
-                    <div class="product-price">¥{{ item.price }}</div>
-                    <div class="sku-actions">
-                      <el-button circle icon="ShoppingCart" @click="handleAddToCart(item)"></el-button>
-                      <el-button type="primary" size="small" @click="handleTryOn(item)">立即试用</el-button>
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">季型</span>
+            <el-select v-model="filterSeason" placeholder="全部" size="default" class="filter-select">
+              <el-option label="全部" value="" />
+              <el-option label="春季型" value="spring" />
+              <el-option label="夏季型" value="summer" />
+              <el-option label="秋季型" value="autumn" />
+              <el-option label="冬季型" value="winter" />
+            </el-select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">色系</span>
+            <el-select v-model="filterColor" placeholder="全部" size="default" class="filter-select">
+              <el-option label="全部" value="" />
+              <el-option label="冷色调" value="cool" />
+              <el-option label="暖色调" value="warm" />
+              <el-option label="中性" value="neutral" />
+            </el-select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">分类</span>
+            <el-select v-model="filterCategory" placeholder="全部" size="default" class="filter-select">
+              <el-option label="全部" value="" />
+              <el-option label="护肤" value="skincare" />
+              <el-option label="彩妆" value="makeup" />
+              <el-option label="工具" value="tools" />
+            </el-select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">排序</span>
+            <el-select v-model="sortOrder" placeholder="推荐优先" size="default" class="filter-select">
+              <el-option label="推荐优先" value="recommend" />
+              <el-option label="价格从低到高" value="price_asc" />
+              <el-option label="价格从高到低" value="price_desc" />
+            </el-select>
+          </div>
+        </div>
+
+        <div v-if="Object.keys(groupedProducts).length === 0" class="empty-state">
+          <el-empty description="还没有找到合适的商品，先试试 AI 推荐妆容吧。">
+            <el-button type="primary" @click="router.push('/upload')">去试试AI推荐妆容</el-button>
+          </el-empty>
+        </div>
+
+        <div class="products-container" v-else>
+          <div v-for="(group, category) in groupedProducts" :key="category" class="category-section">
+            <h2 class="category-title">{{ getCategoryLabel(category) }}</h2>
+            <div class="products-grid">
+              <el-row :gutter="30">
+                <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="item in getVisibleProducts(category, group)" :key="item.id">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <div class="product-img-container">
+                        <img :src="item.image" :alt="item.name" class="real-product-img" />
+                      </div>
+                      <div class="sku-badge">{{ item.sku }}</div>
+                      <div class="tags-container" v-if="item.tags && item.tags.length">
+                        <el-tag
+                          v-for="(tag, index) in item.tags.slice(0, 2)"
+                          :key="index"
+                          size="small"
+                          effect="dark"
+                          class="product-tag"
+                          :type="tag === 'PCA推荐' ? 'warning' : 'info'"
+                        >
+                          {{ tag }}
+                        </el-tag>
+                      </div>
+                      <div class="overlay">
+                        <el-button type="primary" plain round @click="handleTryOn(item)">立即试用</el-button>
+                      </div>
+                    </div>
+                    <div class="product-info">
+                      <h3 class="product-name">{{ item.name }}</h3>
+                      <div class="color-preview" v-if="item.colorHex">
+                        <span class="color-dot" :style="{ backgroundColor: item.colorHex }"></span>
+                        <span class="color-name">{{ item.colorName }}</span>
+                      </div>
+                      <p class="product-desc">{{ item.desc }}</p>
+                      <div class="price-action-row">
+                        <div class="product-price">¥{{ item.price }}</div>
+                        <div class="sku-actions">
+                          <el-button circle icon="ShoppingCart" @click="handleAddToCart(item)"></el-button>
+                          <el-button type="primary" size="small" @click="handleTryOn(item)">立即试用</el-button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </el-col>
-          </el-row>
+                </el-col>
+              </el-row>
+            </div>
+            <div class="view-more-container" v-if="group.length > 4 && !expandedCategories[category as string]">
+              <el-button plain round @click="expandedCategories[category as string] = true" class="view-more-btn">
+                查看更多该类商品 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -62,7 +133,9 @@
       >
         <div class="cart-content">
           <div v-if="cart.length === 0" class="empty-cart">
-            <el-empty description="购物车空空如也" />
+            <el-empty description="你的购物车还是空的，去看看适合你的热门商品吧。">
+              <el-button type="primary" @click="drawerVisible = false">去逛逛</el-button>
+            </el-empty>
           </div>
           <div v-else class="cart-items">
             <div v-for="(item, index) in cart" :key="index" class="cart-item">
@@ -99,24 +172,87 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ShoppingCart, Delete } from '@element-plus/icons-vue'
+import { ShoppingCart, Delete, ArrowDown } from '@element-plus/icons-vue'
 import ModernBackground from '../components/ModernBackground.vue'
 
 const router = useRouter()
+const route = useRoute()
+
+const filterSeason = ref('')
+const filterColor = ref('')
+const filterCategory = ref('')
+const sortOrder = ref('recommend')
+
+onMounted(() => {
+  if (route.query.season) filterSeason.value = route.query.season as string
+  if (route.query.color) filterColor.value = route.query.color as string
+})
+
+const expandedCategories = ref<Record<string, boolean>>({})
 
 const products = [
-  { id: 1, sku: 'S1-CLN', name: '男士焕能洁面乳', desc: '深层清洁，控油保湿', price: '129', image: new URL('../assets/products/cleanser.jpg', import.meta.url).href },
-  { id: 2, sku: 'S1-TNR', name: '清爽保湿爽肤水', desc: '收缩毛孔，醒肤补水', price: '159', image: new URL('../assets/products/toner.jpg', import.meta.url).href },
-  { id: 3, sku: 'S1-CRM', name: '多效修护面霜', desc: '抗皱紧致，滋润不油腻', price: '299', image: new URL('../assets/products/cream.jpg', import.meta.url).href },
-  { id: 4, sku: 'S2-BBC', name: '自然色男士BB霜', desc: '色号: 自然偏白，遮瑕修颜', price: '189', image: new URL('../assets/products/bb_cream.jpg', import.meta.url).href },
-  { id: 5, sku: 'S2-SPY', name: '定型喷雾', desc: '持久定型，清爽自然', price: '89', image: new URL('../assets/products/spray.jpg', import.meta.url).href },
-  { id: 6, sku: 'S2-BRW', name: '男士眉笔', desc: '色号: 深棕灰，立体塑形', price: '59', image: new URL('../assets/products/eyebrow_pencil.jpg', import.meta.url).href },
-  { id: 7, sku: 'S3-AFT', name: '须后舒缓乳', desc: '舒缓修护，清凉止痛', price: '119', image: new URL('../assets/products/aftershave.jpg', import.meta.url).href },
-  { id: 8, sku: 'S3-MSK', name: '男士专用面膜', desc: '深层补水，提亮肤色', price: '99', image: new URL('../assets/products/mask.jpg', import.meta.url).href },
+  // tags, category, colorHex mocked data
+  { id: 1, sku: 'S1-CLN', name: '男士焕能洁面乳', desc: '深层清洁，控油保湿', price: '129', image: new URL('../assets/products/cleanser.jpg', import.meta.url).href, category: 'skincare', tags: ['新手友好', '日常通勤'], season: 'all', colorType: 'neutral' },
+  { id: 2, sku: 'S1-TNR', name: '清爽保湿爽肤水', desc: '收缩毛孔，醒肤补水', price: '159', image: new URL('../assets/products/toner.jpg', import.meta.url).href, category: 'skincare', tags: ['日常通勤'], season: 'all', colorType: 'neutral' },
+  { id: 3, sku: 'S1-CRM', name: '多效修护面霜', desc: '抗皱紧致，滋润不油腻', price: '299', image: new URL('../assets/products/cream.jpg', import.meta.url).href, category: 'skincare', tags: ['PCA推荐', '热门试妆'], season: 'all', colorType: 'neutral' },
+  { id: 4, sku: 'S2-BBC', name: '自然色男士BB霜', desc: '遮瑕修颜，持久不脱妆', price: '189', image: new URL('../assets/products/bb_cream.jpg', import.meta.url).href, category: 'makeup', colorHex: '#e8c39e', colorName: '自然偏白', tags: ['PCA推荐', '热门试妆'], season: 'spring', colorType: 'warm' },
+  { id: 5, sku: 'S2-SPY', name: '定型喷雾', desc: '持久定型，清爽自然', price: '89', image: new URL('../assets/products/spray.jpg', import.meta.url).href, category: 'tools', tags: ['新手友好'], season: 'all', colorType: 'neutral' },
+  { id: 6, sku: 'S2-BRW', name: '男士眉笔', desc: '立体塑形，防水防汗', price: '59', image: new URL('../assets/products/eyebrow_pencil.jpg', import.meta.url).href, category: 'makeup', colorHex: '#4a4036', colorName: '深棕灰', tags: ['PCA推荐', '新手友好'], season: 'winter', colorType: 'cool' },
+  { id: 7, sku: 'S3-AFT', name: '须后舒缓乳', desc: '舒缓修护，清凉止痛', price: '119', image: new URL('../assets/products/aftershave.jpg', import.meta.url).href, category: 'skincare', tags: ['日常通勤'], season: 'all', colorType: 'neutral' },
+  { id: 8, sku: 'S3-MSK', name: '男士专用面膜', desc: '深层补水，提亮肤色', price: '99', image: new URL('../assets/products/mask.jpg', import.meta.url).href, category: 'skincare', tags: ['热门试妆'], season: 'all', colorType: 'neutral' },
 ]
+
+const getCategoryLabel = (cat: string | number) => {
+  const map: Record<string, string> = {
+    skincare: '护肤',
+    makeup: '彩妆',
+    tools: '工具'
+  }
+  return map[cat] || '其他'
+}
+
+const groupedProducts = computed(() => {
+  // 1. 过滤
+  let filtered = products.filter(p => {
+    // mock mock seasons/color mappings 
+    // Usually these are from backend or user's PCA record in real life, but we mock the filtering here.
+    if (filterSeason.value && p.season !== 'all' && p.season !== filterSeason.value) return false
+    if (filterColor.value && p.colorType !== 'neutral' && p.colorType !== filterColor.value) return false
+    if (filterCategory.value && p.category !== filterCategory.value) return false
+    return true
+  })
+
+  // 2. 排序
+  filtered = filtered.sort((a, b) => {
+    if (sortOrder.value === 'price_asc') return Number(a.price) - Number(b.price)
+    if (sortOrder.value === 'price_desc') return Number(b.price) - Number(a.price)
+    // recommend: we'll randomly place PCA推荐 at the top
+    const aRec = a.tags.includes('PCA推荐') ? 1 : 0
+    const bRec = b.tags.includes('PCA推荐') ? 1 : 0
+    return bRec - aRec
+  })
+
+  // 3. 分组
+  const groups: Record<string, typeof products> = {}
+  filtered.forEach(p => {
+    if (!groups[p.category]) {
+      groups[p.category] = []
+    }
+    groups[p.category]!.push(p)
+  })
+  
+  return groups
+})
+
+const getVisibleProducts = (category: string | number, items: any[]) => {
+  if (expandedCategories.value[category]) {
+    return items
+  }
+  return items.slice(0, 4)
+}
 
 const cart = ref<any[]>([])
 const drawerVisible = ref(false)
@@ -270,8 +406,74 @@ const handleTryOn = (product: any) => {
   letter-spacing: 2px;
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 1s ease-out 0.1s backwards;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #4b5563;
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.filter-select {
+  width: 130px;
+}
+
+.filter-select :deep(.el-input__wrapper) {
+  box-shadow: none !important;
+  background-color: #f9fafb;
+  border-radius: 6px;
+}
+
+.empty-state {
+  margin-top: 60px;
+  animation: fadeInDown 1s ease-out 0.2s backwards;
+}
+
+.category-section {
+  margin-bottom: 50px;
+  animation: fadeInUp 1s ease-out 0.2s backwards;
+}
+
+.category-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #10b981;
+  display: inline-block;
+}
+
+.view-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.view-more-btn {
+  padding: 10px 24px;
+}
+
 .products-grid {
-  animation: fadeInUp 1s ease-out 0.3s backwards;
+  /* removed animation to let category block handle it */
 }
 
 .product-card {
@@ -353,6 +555,46 @@ const handleTryOn = (product: any) => {
   font-size: 18px;
   margin-bottom: 8px;
   color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tags-container {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+.product-tag {
+  border: none;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.color-preview {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.color-name {
+  font-size: 13px;
+  color: #4b5563;
 }
 
 .product-desc {

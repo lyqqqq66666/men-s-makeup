@@ -76,7 +76,7 @@ window.addEventListener('touchend', stopDrag)
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 400px;
+  min-height: 250px;
   overflow: hidden;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.2); /* Darker background */
@@ -131,7 +131,7 @@ window.addEventListener('touchend', stopDrag)
 
 .label {
   position: absolute;
-  top: 20px;
+  top: 12px;
   padding: 6px 16px;
   background: rgba(255, 255, 255, 0.9);
   color: #333;
