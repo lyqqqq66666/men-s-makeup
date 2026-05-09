@@ -12,7 +12,6 @@ const llmApi = axios.create({
   timeout: 30000,
 })
 
-// 请求拦截器 - 添加 token
 llmApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -21,7 +20,6 @@ llmApi.interceptors.request.use((config) => {
   return config
 })
 
-// 响应拦截器
 llmApi.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -30,39 +28,21 @@ llmApi.interceptors.response.use(
   }
 )
 
-/**
- * 获取季型描述文案
- * @param {string} seasonType - 季型 (warm_spring, warm_autumn, cool_summer, cool_winter)
- * @returns {Promise<{season_type: string, description: string}>}
- */
-export async function getSeasonDescription(seasonType) {
+export async function getSeasonDescription(seasonType: string): Promise<{season_type: string, description: string}> {
   const response = await llmApi.get('/season_description', {
     params: { season_type: seasonType }
   })
   return response.data
 }
 
-/**
- * 获取风格特征建议
- * @param {string} seasonType - 季型
- * @param {string} style - 妆容风格 (clean, business, idol)
- * @returns {Promise<{season_type: string, style: string, features: string[]}>}
- */
-export async function getStyleFeatures(seasonType, style = 'clean') {
+export async function getStyleFeatures(seasonType: string, style: string = 'clean'): Promise<{season_type: string, style: string, features: string[]}> {
   const response = await llmApi.get('/style_features', {
     params: { season_type: seasonType, style }
   })
   return response.data
 }
 
-/**
- * 获取产品推荐理由
- * @param {string} productName - 产品名称
- * @param {string} seasonType - 季型
- * @param {string} colorInfo - 色号信息
- * @returns {Promise<{product_name: string, recommendation: string}>}
- */
-export async function getProductRecommendation(productName, seasonType, colorInfo = '') {
+export async function getProductRecommendation(productName: string, seasonType: string, colorInfo: string = ''): Promise<{product_name: string, recommendation: string}> {
   const response = await llmApi.get('/product_recommendation', {
     params: {
       product_name: productName,
@@ -73,14 +53,15 @@ export async function getProductRecommendation(productName, seasonType, colorInf
   return response.data
 }
 
-/**
- * 批量获取推荐理由
- * @param {Array} products - 产品列表
- * @param {string} seasonType - 季型
- * @returns {Promise<Map>} - product_id -> recommendation
- */
-export async function batchGetRecommendations(products, seasonType) {
-  const promises = products.map(product =>
+interface Product {
+  product_id: number
+  name: string
+  shade_name?: string
+  color_hex?: string
+}
+
+export async function batchGetRecommendations(products: Product[], seasonType: string): Promise<Map<number, string>> {
+  const promises = products.map((product: Product) =>
     getProductRecommendation(
       product.name,
       seasonType,
@@ -95,7 +76,7 @@ export async function batchGetRecommendations(products, seasonType) {
   )
   
   const results = await Promise.all(promises)
-  const map = new Map()
+  const map = new Map<number, string>()
   results.forEach(r => map.set(r.product_id, r.recommendation))
   return map
 }

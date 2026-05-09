@@ -137,7 +137,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ModernBackground from '../components/ModernBackground.vue'
 import { ShoppingCart } from '@element-plus/icons-vue'
-import { getProducts } from '../api/products'
+import { getProducts, Product, CartItem } from '../api/products'
 
 const router = useRouter()
 const route = useRoute()
@@ -147,8 +147,8 @@ const filterCategory = ref('')
 const sortBy = ref('')
 const drawerVisible = ref(false)
 
-const products = ref([])
-const cart = ref([])
+const products = ref<Product[]>([])
+const cart = ref<CartItem[]>([])
 
 const cartTotalQuantity = computed(() => {
   return cart.value.reduce((sum, item) => sum + item.quantity, 0)
@@ -168,11 +168,11 @@ const loadProducts = async () => {
   }
 }
 
-const viewProduct = (product) => {
+const viewProduct = (product: Product) => {
   router.push({ name: 'ProductDetail', params: { id: product.product_id } })
 }
 
-const updateQuantity = (productId, quantity) => {
+const updateQuantity = (productId: number, quantity: number) => {
   if (quantity <= 0) {
     removeFromCart(productId)
     return
@@ -184,7 +184,7 @@ const updateQuantity = (productId, quantity) => {
   }
 }
 
-const removeFromCart = (productId) => {
+const removeFromCart = (productId: number) => {
   cart.value = cart.value.filter(item => item.product_id !== productId)
   localStorage.setItem('cart', JSON.stringify(cart.value))
 }

@@ -57,14 +57,14 @@
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon">
-              <el-icon><Sparkles /></el-icon>
+              <el-icon><Star /></el-icon>
             </div>
             <h3>AI智能分析</h3>
             <p>基于PCA季型分析，精准推荐最适合您的色系和产品</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">
-              <el-icon><Wand2 /></el-icon>
+              <el-icon><MagicStick /></el-icon>
             </div>
             <h3>虚拟试妆</h3>
             <p>实时预览妆容效果，降低试错成本，找到最适合的风格</p>
@@ -78,7 +78,7 @@
           </div>
           <div class="feature-card">
             <div class="feature-icon">
-              <el-icon><Bookmark /></el-icon>
+              <el-icon><Collection /></el-icon>
             </div>
             <h3>方案保存</h3>
             <p>保存个人妆容方案，随时复用，打造专属风格</p>
@@ -160,7 +160,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ModernBackground from '../components/ModernBackground.vue'
 import FloatingImages from '../components/FloatingImages.vue'
-import { Goods, Camera, Sparkles, Wand2, ShoppingBag, Bookmark } from '@element-plus/icons-vue'
+import { Goods, Camera, Star, MagicStick, ShoppingBag, Collection } from '@element-plus/icons-vue'
 import { useUserStore } from '../store/user'
 
 const router = useRouter()
