@@ -9,8 +9,8 @@
             返回上一页
           </el-button>
         </div>
-        <h2 class="title">智颜解析档案</h2>
-        <p class="subtitle">基于百万级面部色彩数据，为您生成专属美学报告</p>
+        <h2 class="title">智颜MenX解析档案</h2>
+        <p class="subtitle">基于百万级面部色彩数据与AI智能分析，为您生成专属美学报告</p>
 
         <div class="report-content">
           <!-- Left: User Avatar -->
@@ -21,21 +21,21 @@
                 <el-icon><UserFilled /></el-icon>
               </div>
             </div>
-            <div class="avatar-badge">矫正完成</div>
+            <div class="avatar-badge">AI分析完成</div>
           </div>
 
           <!-- Right: PCA Results -->
           <div class="result-section">
             <div class="season-badge">
               <span class="label">专属季型</span>
-              <span class="value">{{ mockResult.season }}</span>
+              <span class="value">{{ pcaResult.season }}</span>
             </div>
-            <p class="season-desc">{{ mockResult.description }}</p>
+            <p class="season-desc">{{ pcaResult.description }}</p>
 
-            <div class="features-block">
+            <div class="features-block" v-if="pcaResult.features && pcaResult.features.length > 0">
               <h3><el-icon><Star /></el-icon> 专属风格与特征</h3>
               <ul>
-                <li v-for="(feature, index) in mockResult.features" :key="index">{{ feature }}</li>
+                <li v-for="(feature, index) in pcaResult.features" :key="index">{{ feature }}</li>
               </ul>
             </div>
 
@@ -45,7 +45,7 @@
                 <div class="color-list pantone-list">
                   <div 
                     class="pantone-card clickable-card" 
-                    v-for="(color, index) in mockResult.recommendedColors" 
+                    v-for="(color, index) in pcaResult.recommendedColors" 
                     :key="index"
                     @click="goToShopWithColor(color.filterKey)"
                   >
@@ -61,10 +61,10 @@
               </div>
             </div>
 
-            <div class="recommended-products-block" v-if="mockResult.recommendedProducts && mockResult.recommendedProducts.length > 0">
+            <div class="recommended-products-block" v-if="pcaResult.recommendedProducts && pcaResult.recommendedProducts.length > 0">
               <h3><el-icon><Goods /></el-icon> 为您优选试妆商品</h3>
               <div class="mini-products-list">
-                <div class="mini-product-card" v-for="product in mockResult.recommendedProducts" :key="product.id" @click="goToShopWithColor('')">
+                <div class="mini-product-card" v-for="product in pcaResult.recommendedProducts" :key="product.id" @click="goToShopWithColor('')">
                   <img :src="product.image" class="mini-product-img" />
                   <div class="mini-product-info">
                     <div class="mini-product-name">{{ product.name }}</div>
@@ -93,32 +93,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ModernBackground from '../components/ModernBackground.vue'
 import { UserFilled, Check, ArrowRight, ArrowLeft, Star, Goods, ShoppingBag } from '@element-plus/icons-vue'
+import { getSeasonDescription, getStyleFeatures } from '../api/llm'
 
 const router = useRouter()
 const route = useRoute()
 const uploadedImage = ref('')
 
-onMounted(() => {
-  // 从上传页面接收临时图片 URL
-  if (route.query.img) {
-    uploadedImage.value = route.query.img as string
-  }
-})
-
-// Mock PCA 数据
-const mockResult = {
-  seasonKey: 'autumn', // 用于向商城传递的季型枚举值
+// PCA 结果数据
+const pcaResult = reactive({
+  seasonKey: 'autumn',
   season: '温润秋季型',
-  description: '您的面部色彩重心偏暖且柔和，呈现出如成熟秋枫般稳重、深邃的质感。适合带有大地色调、低饱和度却具有包容感的色彩，能完美衬托出男性内敛且高级的魅力。',
-  features: [
-    '底妆建议：选择自然偏暖、哑光质地的粉底，避免假白。',
-    '眉毛建议：深棕色或灰褐色，强调毛流感，避免纯黑生硬线条。',
-    '穿搭色彩：大地色系、卡其色、军绿色等低亮度暖色。'
-  ],
+  description: '正在生成个性化描述...',
+  features: [] as string[],
   recommendedColors: [
     { name: '大地棕', hex: '#6D4C41', pantone: '19-1420 TCX', filterKey: 'neutral' },
     { name: '枫叶红', hex: '#D84315', pantone: '17-1462 TCX', filterKey: 'warm' },
@@ -126,18 +116,74 @@ const mockResult = {
     { name: '暖驼色', hex: '#D7CCC8', pantone: '13-1008 TCX', filterKey: 'neutral' }
   ],
   recommendedProducts: [
-    { id: 4, name: '自然色男士BB霜', price: '189', image: new URL('../assets/products/bb_cream.jpg', import.meta.url).href, tags: ['PCA推荐', '热门试妆'] },
-    { id: 6, name: '男士眉笔 (深棕灰)', price: '59', image: new URL('../assets/products/eyebrow_pencil.jpg', import.meta.url).href, tags: ['PCA推荐', '新手友好'] }
+    { id: 4, name: '自然色男士BB霜', price: '189', image: new URL('../assets/products/bb_cream.jpg', import.meta.url).href, tags: ['AI推荐', '热门试妆'] },
+    { id: 6, name: '男士眉笔 (深棕灰)', price: '59', image: new URL('../assets/products/eyebrow_pencil.jpg', import.meta.url).href, tags: ['AI推荐', '新手友好'] }
   ]
+})
+
+// 季型映射
+const seasonMap: Record<string, { name: string, llmType: string }> = {
+  'warm_spring': { name: '暖春型', llmType: 'warm_spring' },
+  'warm_autumn': { name: '温润秋季型', llmType: 'warm_autumn' },
+  'cool_summer': { name: '清爽夏季型', llmType: 'cool_summer' },
+  'cool_winter': { name: '锐利冬季型', llmType: 'cool_winter' }
+}
+
+onMounted(async () => {
+  // 从上传页面接收临时图片 URL
+  if (route.query.img) {
+    uploadedImage.value = route.query.img as string
+  }
+  
+  // 从路由获取季型信息（如果有）
+  const seasonParam = route.query.season as string
+  if (seasonParam) {
+    const seasonInfo = seasonMap[seasonParam.toLowerCase()]
+    if (seasonInfo) {
+      pcaResult.seasonKey = seasonParam.toLowerCase()
+      pcaResult.season = seasonInfo.name
+      await loadLLMContent(seasonInfo.llmType)
+    }
+  } else {
+    // 默认使用暖秋型测试
+    await loadLLMContent('warm_autumn')
+  }
+})
+
+// 加载 LLM 生成的内容
+async function loadLLMContent(seasonType: string) {
+  try {
+    // 并行请求季型描述和特征建议
+    const [descResult, featuresResult] = await Promise.all([
+      getSeasonDescription(seasonType),
+      getStyleFeatures(seasonType, 'clean')
+    ])
+    
+    if (descResult && descResult.description) {
+      pcaResult.description = descResult.description
+    }
+    
+    if (featuresResult && featuresResult.features && featuresResult.features.length > 0) {
+      pcaResult.features = featuresResult.features
+    }
+  } catch (error) {
+    console.error('LLM API 调用失败:', error)
+    // 使用默认内容
+    pcaResult.description = '您的面部色彩重心偏暖且柔和，呈现出如成熟秋枫般稳重、深邃的质感。适合带有大地色调、低饱和度却具有包容感的色彩，能完美衬托出男性内敛且高级的魅力。'
+    pcaResult.features = [
+      '底妆建议：选择自然偏暖、哑光质地的粉底，避免假白。',
+      '眉毛建议：深棕色或灰褐色，强调毛流感，避免纯黑生硬线条。',
+      '穿搭色彩：大地色系、卡其色、军绿色等低亮度暖色。'
+    ]
+  }
 }
 
 const goToMakeup = () => {
-  // 跳转到现有的最终合成页，把图片继续带过去
   router.push({
     name: 'Result',
     query: {
       img: uploadedImage.value,
-      season: mockResult.season // 可以附带季型参数供后续使用
+      season: pcaResult.seasonKey
     }
   })
 }
@@ -146,7 +192,7 @@ const goToShopWithColor = (colorFilterKey: string) => {
   router.push({
     path: '/shop',
     query: {
-      season: mockResult.seasonKey,
+      season: pcaResult.seasonKey,
       color: colorFilterKey || undefined
     }
   })

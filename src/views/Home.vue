@@ -5,7 +5,9 @@
     
     <div class="content-wrapper">
       <header class="header" :class="{ 'header-hidden': !headerVisible }">
-        <div class="logo">颜选MenX</div>
+        <div class="logo-wrapper" @click="router.push('/')">
+          <img src="../assets/brand/yanxuan-menx-logo.png" alt="颜选MenX" class="logo-img">
+        </div>
         <div class="header-right">
           <div class="nav-item" @click="router.push('/shop')">
             <el-icon class="nav-icon"><Goods /></el-icon>
@@ -31,427 +33,518 @@
         </div>
       </header>
 
-      <main class="main-content">
-        <!-- Hero Section -->
-        <section class="hero-section">
-          <h1 class="main-title">智能图像矫正<br>与风格男妆生成系统</h1>
+      <main class="main-section">
+        <div class="hero-content">
+          <h1 class="main-title">智能矫正与专属风格男妆<br>一键开启影像新视界</h1>
           <p class="description">
-            基于先进的深度学习算法，为您提供专业级的人像矫正与风格化美妆服务。<br>
-            一键上传，智能优化，展现最自信的自己。
+            颜选MenX，为现代男士打造专属形象管理方案。<br>
+            AI智能矫正光影角度，定制风格妆容，重塑你的魅力瞬间。
           </p>
-          
-          <div class="action-area">
-            <el-button 
-              type="primary" 
-              size="large" 
-              class="start-btn"
-              @click="handleStart"
-            >
-              立即体验
-              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+          <div class="cta-buttons">
+            <el-button class="cta-primary" size="large" @click="router.push('/upload')">
+              <el-icon class="el-icon--left"><Camera /></el-icon>
+              开始体验
+            </el-button>
+            <el-button class="cta-secondary" size="large" @click="router.push('/shop')">
+              探索商品
             </el-button>
           </div>
-
-          <div class="scroll-indicator" @click="scrollToShowcase">
-            <span>探索更多风格</span>
-            <el-icon class="scroll-icon"><ArrowDown /></el-icon>
-          </div>
-        </section>
-
-        <!-- Showcase Section -->
-        <section class="showcase-section" id="showcase" v-if="showShowcase">
-          <h2 class="section-title">探索多面魅力</h2>
-          <p class="section-subtitle">为您量身定制的多种风格选择</p>
-          
-          <div class="style-grid">
-            <div class="style-card" v-for="(style, index) in styles" :key="index">
-              <div class="card-image">
-                <img :src="style.image" :alt="style.title" />
-                <div class="card-overlay">
-                  <el-button round class="try-btn" @click="handleStart(style)">尝试此风格</el-button>
-                </div>
-              </div>
-              <div class="card-content">
-                <h3>{{ style.title }}</h3>
-                <p>{{ style.desc }}</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
       </main>
 
-      <footer class="footer" v-if="showShowcase">
-        <p>© 2025 颜选MenX Team. All Rights Reserved.</p>
+      <section class="features-section">
+        <h2 class="section-title">为什么选择我们</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <el-icon><Sparkles /></el-icon>
+            </div>
+            <h3>AI智能分析</h3>
+            <p>基于PCA季型分析，精准推荐最适合您的色系和产品</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <el-icon><Wand2 /></el-icon>
+            </div>
+            <h3>虚拟试妆</h3>
+            <p>实时预览妆容效果，降低试错成本，找到最适合的风格</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <el-icon><ShoppingBag /></el-icon>
+            </div>
+            <h3>一键购买</h3>
+            <p>试妆满意直接购买推荐产品，形成完整商业闭环</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <el-icon><Bookmark /></el-icon>
+            </div>
+            <h3>方案保存</h3>
+            <p>保存个人妆容方案，随时复用，打造专属风格</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="styles-section">
+        <h2 class="section-title">三种风格，一键切换</h2>
+        <div class="styles-grid">
+          <div class="style-card" @click="goToMakeup('natural')">
+            <div class="style-image">
+              <div class="style-overlay"></div>
+              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=young%20asian%20man%20natural%20makeup%20fresh%20clean%20look%20professional%20portrait&image_size=portrait_4_3" alt="自然清透">
+            </div>
+            <div class="style-info">
+              <h3>自然清透</h3>
+              <p>日常通勤的最佳选择</p>
+            </div>
+          </div>
+          <div class="style-card" @click="goToMakeup('business')">
+            <div class="style-image">
+              <div class="style-overlay"></div>
+              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=young%20asian%20man%20business%20professional%20makeup%20confident%20portrait&image_size=portrait_4_3" alt="轻熟职场">
+            </div>
+            <div class="style-info">
+              <h3>轻熟职场</h3>
+              <p>展现专业自信形象</p>
+            </div>
+          </div>
+          <div class="style-card" @click="goToMakeup('korean')">
+            <div class="style-image">
+              <div class="style-overlay"></div>
+              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=young%20asian%20man%20korean%20style%20trendy%20makeup%20fashion%20portrait&image_size=portrait_4_3" alt="韩系潮流">
+            </div>
+            <div class="style-info">
+              <h3>韩系潮流</h3>
+              <p>时尚精致的魅力风格</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <img src="../assets/brand/yanxuan-menx-logo.png" alt="颜选MenX" class="footer-logo">
+            <p>为现代男士打造专属形象管理方案</p>
+          </div>
+          <div class="footer-links">
+            <div class="link-group">
+              <h4>产品服务</h4>
+              <ul>
+                <li><a href="#features">功能介绍</a></li>
+                <li><a href="#styles">妆容风格</a></li>
+                <li><a href="/shop">商品商城</a></li>
+              </ul>
+            </div>
+            <div class="link-group">
+              <h4>关于我们</h4>
+              <ul>
+                <li><a href="#about">品牌故事</a></li>
+                <li><a href="#contact">联系我们</a></li>
+                <li><a href="#privacy">隐私政策</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>© 2025 颜选MenX Team. All Rights Reserved.</p>
+        </div>
       </footer>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../store/user'
-import FloatingImages from '../components/FloatingImages.vue'
 import ModernBackground from '../components/ModernBackground.vue'
-import { ArrowRight, Goods, ArrowDown } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import FloatingImages from '../components/FloatingImages.vue'
+import { Goods, Camera, Sparkles, Wand2, ShoppingBag, Bookmark } from '@element-plus/icons-vue'
+import { useUserStore } from '../store/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const showShowcase = ref(false)
 const headerVisible = ref(true)
-const lastScrollTop = ref(0)
+let lastScrollY = 0
 
-const styles = [
-  {
-    title: '自然清透',
-    desc: '还原肌肤本真质感，打造伪素颜的清爽形象',
-    image: '/images/styles/natural.png'
-  },
-  {
-    title: '韩系潮流',
-    desc: '紧跟时尚潮流，打造精致亮眼的舞台级妆效',
-    image: '/images/styles/idol.png'
-  },
-  {
-    title: '轻熟职场',
-    desc: '干练利落的职场形象，提升专业度与信赖感',
-    image: '/images/styles/business.png'
-  },
-  {
-    title: '硬朗质感',
-    desc: '强调面部轮廓与线条，展现成熟稳重的男性魅力',
-    image: '/images/styles/textured.png'
-  }
-]
-
-const handleStart = (style?: any) => {
-  if (style && style.title === '硬朗质感') {
-    ElMessage.warning('该风格正在开发中，敬请期待')
-    return
-  }
-
-  if (userStore.token) {
-    router.push('/upload')
-  } else {
-    ElMessage.warning('请先登录以使用功能')
-    router.push('/login')
-  }
+const handleScroll = (event: any) => {
+  const currentScrollY = event.target.scrollTop
+  headerVisible.value = currentScrollY < lastScrollY || currentScrollY < 50
+  lastScrollY = currentScrollY
 }
 
 const handleLogout = () => {
   userStore.logout()
-  ElMessage.success('已退出登录')
   router.push('/login')
 }
 
-const scrollToShowcase = async () => {
-  showShowcase.value = true
-  await nextTick()
-  document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' })
+const goToMakeup = (style: string) => {
+  router.push({ name: 'Result', query: { style } })
 }
 
-const handleScroll = (e: Event) => {
-  const target = e.target as HTMLElement
-  const scrollTop = target.scrollTop
-  
-  if (scrollTop > lastScrollTop.value && scrollTop > 50) {
-    // Scrolling down & past top
-    headerVisible.value = false
-  } else {
-    // Scrolling up
-    headerVisible.value = true
-  }
-  
-  lastScrollTop.value = scrollTop
-}
+onMounted(() => {})
+
+onUnmounted(() => {})
 </script>
 
 <style scoped>
 .home-container {
+  min-height: 100vh;
   position: relative;
-  height: 100vh;
-  width: 100%;
-  background: #f8fafc;
-  overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden;
-  color: #1f2937;
-  scroll-behavior: smooth;
 }
 
 .content-wrapper {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
 .header {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
+  right: 0;
   z-index: 100;
+  padding: 16px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-  transition: transform 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .header-hidden {
   transform: translateY(-100%);
 }
 
+.logo-wrapper {
+  cursor: pointer;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+}
+
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 20px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  color: #1f2937;
-  border-radius: 20px;
   cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 20px;
   transition: all 0.3s ease;
 }
 
 .nav-item:hover {
-  background: #fff;
-  border-color: #10b981;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(46, 125, 50, 0.1);
+  color: #2E7D32;
+}
+
+.nav-icon {
+  font-size: 18px;
 }
 
 .divider {
   width: 1px;
   height: 24px;
-  background: rgba(0, 0, 0, 0.1);
-  margin: 0 10px;
+  background: #e2e8f0;
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  background: linear-gradient(to right, #10b981, #059669);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.username {
-  margin-right: 15px;
-  color: #4b5563;
-}
-
-.main-content {
-  flex: 1;
+.user-actions {
   display: flex;
-  flex-direction: column;
-  padding-top: 80px; /* Header height */
-}
-
-/* Hero Section */
-.hero-section {
-  min-height: calc(100vh - 80px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
+}
+
+.main-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 40px 80px;
+}
+
+.hero-content {
   text-align: center;
-  padding: 0 20px;
-  position: relative;
+  max-width: 800px;
 }
 
 .main-title {
-  font-size: 64px;
-  line-height: 1.2;
-  margin-bottom: 24px;
+  font-size: 48px;
   font-weight: 800;
-  letter-spacing: 2px;
-  color: #111827;
-  background: linear-gradient(135deg, #111827 0%, #374151 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin-bottom: 24px;
 }
 
 .description {
   font-size: 18px;
-  line-height: 1.6;
-  color: #4b5563;
-  margin-bottom: 48px;
-  max-width: 600px;
+  color: #64748b;
+  line-height: 1.8;
+  margin-bottom: 40px;
 }
 
-.start-btn {
-  padding: 25px 50px;
-  font-size: 20px;
-  border-radius: 50px;
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-  border: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-}
-
-.start-btn:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(16, 185, 129, 0.4);
-}
-
-.scroll-indicator {
-  position: absolute;
-  bottom: 40px;
+.cta-buttons {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  color: #9ca3af;
-  cursor: pointer;
-  transition: color 0.3s;
-  animation: bounce 2s infinite;
+  justify-content: center;
+  gap: 16px;
 }
 
-.scroll-indicator:hover {
-  color: #10b981;
+.cta-primary {
+  background: linear-gradient(135deg, #2E7D32, #1B5E20) !important;
+  border: none !important;
+  padding: 14px 40px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border-radius: 50px !important;
+  box-shadow: 0 10px 30px rgba(46, 125, 50, 0.3);
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-10px); }
-  60% { transform: translateY(-5px); }
+.cta-secondary {
+  background: white !important;
+  color: #2E7D32 !important;
+  border: 2px solid #2E7D32 !important;
+  padding: 14px 40px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border-radius: 50px !important;
 }
 
-/* Showcase Section */
-.showcase-section {
-  min-height: 100vh;
-  padding: 100px 40px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.features-section {
+  padding: 80px 40px;
+  background: white;
 }
 
 .section-title {
-  font-size: 42px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 16px;
-}
-
-.section-subtitle {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 60px;
-}
-
-.style-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 40px;
-  width: 100%;
-  max-width: 1400px;
-}
-
-.style-card {
-  background: #fff;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  transition: all 0.4s ease;
-  cursor: pointer;
-}
-
-.style-card:hover {
-  transform: translateY(-15px);
-  box-shadow: 0 25px 50px rgba(0,0,0,0.1);
-}
-
-.card-image {
-  width: 100%;
-  height: 350px;
-  overflow: hidden;
-  position: relative;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s ease;
-}
-
-.style-card:hover .card-image img {
-  transform: scale(1.1);
-}
-
-.card-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.style-card:hover .card-overlay {
-  opacity: 1;
-}
-
-.try-btn {
-  background: #fff;
-  color: #1f2937;
-  border: none;
-  padding: 12px 30px;
-  font-weight: 600;
-  transform: translateY(20px);
-  transition: transform 0.3s ease;
-}
-
-.style-card:hover .try-btn {
-  transform: translateY(0);
-}
-
-.card-content {
-  padding: 25px;
   text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 48px;
 }
 
-.card-content h3 {
-  font-size: 22px;
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background: white;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #2E7D32;
+}
+
+.feature-card h3 {
+  font-size: 18px;
   font-weight: 600;
-  color: #111827;
-  margin-bottom: 10px;
+  color: #1a1a1a;
+  margin-bottom: 12px;
 }
 
-.card-content p {
-  color: #6b7280;
+.feature-card p {
   font-size: 14px;
+  color: #64748b;
   line-height: 1.6;
 }
 
-.footer {
-  padding: 40px 20px;
-  text-align: center;
-  color: #9ca3af;
+.styles-section {
+  padding: 80px 40px;
+  background: #f8fafc;
+}
+
+.styles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.style-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.style-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.style-image {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+}
+
+.style-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.style-card:hover .style-image img {
+  transform: scale(1.1);
+}
+
+.style-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+
+.style-info {
+  padding: 20px;
+}
+
+.style-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.style-info p {
   font-size: 14px;
-  background: #fff;
-  border-top: 1px solid #f3f4f6;
+  color: #64748b;
+}
+
+.footer {
+  background: #1a1a1a;
+  color: white;
+  padding: 60px 40px 30px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-brand {
+  flex: 1;
+}
+
+.footer-logo {
+  height: 50px;
+  width: auto;
+  margin-bottom: 12px;
+}
+
+.footer-brand p {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 60px;
+}
+
+.link-group h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #cbd5e1;
+}
+
+.link-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.link-group li {
+  margin-bottom: 8px;
+}
+
+.link-group a {
+  color: #94a3b8;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.link-group a:hover {
+  color: white;
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 30px;
+  border-top: 1px solid #334155;
+  text-align: center;
+}
+
+.footer-bottom p {
+  color: #64748b;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 12px 20px;
+  }
+  
+  .main-title {
+    font-size: 32px;
+  }
+  
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .styles-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    gap: 40px;
+  }
 }
 </style>

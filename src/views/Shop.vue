@@ -4,7 +4,9 @@
     
     <div class="content-wrapper">
       <header class="header">
-        <div class="logo" @click="router.push('/')">颜选MenX</div>
+        <div class="logo-wrapper" @click="router.push('/')">
+          <img src="../assets/brand/yanxuan-menx-logo.png" alt="颜选MenX" class="logo-img">
+        </div>
         <div class="nav-actions">
           <el-button type="text" class="nav-btn" @click="router.push('/')">返回首页</el-button>
           
@@ -34,138 +36,97 @@
             </el-select>
           </div>
           <div class="filter-group">
-            <span class="filter-label">色系</span>
-            <el-select v-model="filterColor" placeholder="全部" size="default" class="filter-select">
-              <el-option label="全部" value="" />
-              <el-option label="冷色调" value="cool" />
-              <el-option label="暖色调" value="warm" />
-              <el-option label="中性" value="neutral" />
-            </el-select>
-          </div>
-          <div class="filter-group">
             <span class="filter-label">分类</span>
             <el-select v-model="filterCategory" placeholder="全部" size="default" class="filter-select">
               <el-option label="全部" value="" />
-              <el-option label="护肤" value="skincare" />
-              <el-option label="彩妆" value="makeup" />
-              <el-option label="工具" value="tools" />
+              <el-option label="底妆" value="base" />
+              <el-option label="眉部" value="brow" />
+              <el-option label="眼部" value="eye" />
+              <el-option label="唇部" value="lip" />
+              <el-option label="修容" value="contour" />
             </el-select>
           </div>
           <div class="filter-group">
             <span class="filter-label">排序</span>
-            <el-select v-model="sortOrder" placeholder="推荐优先" size="default" class="filter-select">
-              <el-option label="推荐优先" value="recommend" />
+            <el-select v-model="sortBy" placeholder="默认" size="default" class="filter-select">
+              <el-option label="默认" value="" />
               <el-option label="价格从低到高" value="price_asc" />
               <el-option label="价格从高到低" value="price_desc" />
+              <el-option label="销量优先" value="sales" />
             </el-select>
           </div>
         </div>
 
-        <div v-if="Object.keys(groupedProducts).length === 0" class="empty-state">
-          <el-empty description="还没有找到合适的商品，先试试 AI 推荐妆容吧。">
-            <el-button type="primary" @click="router.push('/upload')">去试试AI推荐妆容</el-button>
-          </el-empty>
-        </div>
-
-        <div class="products-container" v-else>
-          <div v-for="(group, category) in groupedProducts" :key="category" class="category-section">
-            <h2 class="category-title">{{ getCategoryLabel(category) }}</h2>
-            <div class="products-grid">
-              <el-row :gutter="30">
-                <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="item in getVisibleProducts(category, group)" :key="item.id">
-                  <div class="product-card">
-                    <div class="product-image">
-                      <div class="product-img-container">
-                        <img :src="item.image" :alt="item.name" class="real-product-img" />
-                      </div>
-                      <div class="sku-badge">{{ item.sku }}</div>
-                      <div class="tags-container" v-if="item.tags && item.tags.length">
-                        <el-tag
-                          v-for="(tag, index) in item.tags.slice(0, 2)"
-                          :key="index"
-                          size="small"
-                          effect="dark"
-                          class="product-tag"
-                          :type="tag === 'PCA推荐' ? 'warning' : 'info'"
-                        >
-                          {{ tag }}
-                        </el-tag>
-                      </div>
-                      <div class="overlay">
-                        <el-button type="primary" plain round @click="handleTryOn(item)">立即试用</el-button>
-                      </div>
-                    </div>
-                    <div class="product-info">
-                      <h3 class="product-name">{{ item.name }}</h3>
-                      <div class="color-preview" v-if="item.colorHex">
-                        <span class="color-dot" :style="{ backgroundColor: item.colorHex }"></span>
-                        <span class="color-name">{{ item.colorName }}</span>
-                      </div>
-                      <p class="product-desc">{{ item.desc }}</p>
-                      <div class="price-action-row">
-                        <div class="product-price">¥{{ item.price }}</div>
-                        <div class="sku-actions">
-                          <el-button circle icon="ShoppingCart" @click="handleAddToCart(item)"></el-button>
-                          <el-button type="primary" size="small" @click="handleTryOn(item)">立即试用</el-button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </el-col>
-              </el-row>
+        <div class="products-grid">
+          <div 
+            class="product-card" 
+            v-for="product in products" 
+            :key="product.product_id"
+            @click="viewProduct(product)"
+          >
+            <div class="product-image-wrapper">
+              <img :src="product.image_url || `https://neeko-copilot.bytedance.net/api/text_to_image?prompt=men%20cosmetics%20product%20${product.name}&image_size=square`" alt="商品图片" class="product-image">
+              <div class="product-tags">
+                <el-tag size="small" type="success" effect="dark" v-if="product.tags?.includes('PCA推荐')">PCA推荐</el-tag>
+                <el-tag size="small" type="warning" effect="dark" v-if="product.tags?.includes('热门试用')">热门试用</el-tag>
+                <el-tag size="small" type="info" effect="dark" v-if="product.tags?.includes('新手友好')">新手友好</el-tag>
+              </div>
             </div>
-            <div class="view-more-container" v-if="group.length > 4 && !expandedCategories[category as string]">
-              <el-button plain round @click="expandedCategories[category as string] = true" class="view-more-btn">
-                查看更多该类商品 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
+            <div class="product-info">
+              <div class="product-name">{{ product.name }}</div>
+              <div class="product-brand">{{ product.brand }}</div>
+              <div class="product-price">¥{{ product.price }}</div>
+              <div class="product-colors" v-if="product.color_hex">
+                <span class="color-label">色号:</span>
+                <div class="color-dots">
+                  <span class="color-dot" :style="{ backgroundColor: product.color_hex }" :title="product.shade_name"></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
 
-      <!-- Shopping Cart Drawer -->
-      <el-drawer
-        v-model="drawerVisible"
-        title="我的购物车"
-        direction="rtl"
-        size="400px"
-        custom-class="cart-drawer"
-      >
+      <el-drawer title="购物车" :visible="drawerVisible" @close="drawerVisible = false" direction="rtl" size="400px">
         <div class="cart-content">
           <div v-if="cart.length === 0" class="empty-cart">
-            <el-empty description="你的购物车还是空的，去看看适合你的热门商品吧。">
-              <el-button type="primary" @click="drawerVisible = false">去逛逛</el-button>
-            </el-empty>
+            <el-icon :size="48" class="empty-icon"><ShoppingCart /></el-icon>
+            <p>购物车是空的</p>
+            <el-button type="primary" @click="router.push('/shop')">去购物</el-button>
           </div>
-          <div v-else class="cart-items">
-            <div v-for="(item, index) in cart" :key="index" class="cart-item">
-              <img :src="item.image" class="cart-item-img" />
-              <div class="cart-item-info">
-                <div class="cart-item-name">{{ item.name }}</div>
-                <div class="cart-item-sku">SKU: {{ item.sku }}</div>
-                <div class="cart-item-price">¥{{ item.price }}</div>
+          <div v-else>
+            <div class="cart-items">
+              <div 
+                class="cart-item" 
+                v-for="item in cart" 
+                :key="item.product_id"
+              >
+                <img :src="item.image" class="cart-item-image">
+                <div class="cart-item-info">
+                  <div class="cart-item-name">{{ item.name }}</div>
+                  <div class="cart-item-price">¥{{ item.price }}</div>
+                  <div class="cart-item-quantity">
+                    <el-button size="small" @click="updateQuantity(item.product_id, item.quantity - 1)">-</el-button>
+                    <span>{{ item.quantity }}</span>
+                    <el-button size="small" @click="updateQuantity(item.product_id, item.quantity + 1)">+</el-button>
+                  </div>
+                </div>
+                <el-button size="small" type="danger" @click="removeFromCart(item.product_id)">删除</el-button>
               </div>
-              <el-button
-                type="danger"
-                :icon="Delete"
-                circle
-                size="small"
-                @click="removeFromCart(index)"
-              />
+            </div>
+            <div class="cart-summary">
+              <div class="summary-row">
+                <span>商品数量</span>
+                <span>{{ cartTotalQuantity }}</span>
+              </div>
+              <div class="summary-row total">
+                <span>合计</span>
+                <span>¥{{ cartTotalPrice }}</span>
+              </div>
+              <el-button type="primary" size="large" class="checkout-btn" @click="checkout">结算</el-button>
             </div>
           </div>
         </div>
-        <template #footer>
-          <div class="cart-footer">
-            <div class="total-price">
-              <span>总计:</span>
-              <span class="price-value">¥{{ totalPrice }}</span>
-            </div>
-            <el-button type="primary" size="large" class="checkout-btn" @click="handleCheckout" :disabled="cart.length === 0">
-              立即结算
-            </el-button>
-          </div>
-        </template>
       </el-drawer>
     </div>
   </div>
@@ -174,688 +135,316 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { ShoppingCart, Delete, ArrowDown } from '@element-plus/icons-vue'
 import ModernBackground from '../components/ModernBackground.vue'
-import { getProductRecommendationsApi } from '@/api/recommend'
+import { ShoppingCart } from '@element-plus/icons-vue'
+import { getProducts } from '../api/products'
 
 const router = useRouter()
 const route = useRoute()
 
 const filterSeason = ref('')
-const filterColor = ref('')
 const filterCategory = ref('')
-const sortOrder = ref('recommend')
+const sortBy = ref('')
+const drawerVisible = ref(false)
 
-// 来自《商品部分展示图.docx》的商品清单（含导出图片）
-const docxProducts = [
-  {
-    id: 'LIP012',
-    sku: 'LIP012',
-    name: 'MAC Velvet Teddy',
-    desc: '经典哑光棕粉唇色，适合打造低调通勤妆感。',
-    price: 189,
-    image: '/images/products/docx/lip012-velvet-teddy.png',
-    category: 'makeup',
-    tags: ['Docx导入', '热门试用'],
-    season: 'all',
-    colorType: 'warm',
-    colorHex: '#A56A64',
-    colorName: '暖棕豆沙'
-  },
-  {
-    id: 'LIP002',
-    sku: 'LIP002',
-    name: 'MAC Yash',
-    desc: '偏冷裸棕调，适合日常自然男妆。',
-    price: 189,
-    image: '/images/products/docx/lip002-yash.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入'],
-    season: 'all',
-    colorType: 'neutral',
-    colorHex: '#9A7067',
-    colorName: '裸棕色'
-  },
-  {
-    id: 'LIP019',
-    sku: 'LIP019',
-    name: 'Dior Lip Glow 012 Rosewood',
-    desc: '润泽玫瑰木色，上嘴提气色不过分张扬。',
-    price: 299,
-    image: '/images/products/docx/lip019-rosewood.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入', 'PCA推荐'],
-    season: 'all',
-    colorType: 'warm',
-    colorHex: '#B76E6E',
-    colorName: '玫瑰木'
-  },
-  {
-    id: 'LIP018',
-    sku: 'LIP018',
-    name: 'Dior Lip Glow 000 Universal',
-    desc: '透明润唇型，适合素颜增亮和打底。',
-    price: 299,
-    image: '/images/products/docx/lip018-universal.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入'],
-    season: 'all',
-    colorType: 'neutral',
-    colorHex: '#E9C3B0',
-    colorName: '透明自然'
-  },
-  {
-    id: 'EYE009',
-    sku: 'EYE009',
-    name: 'MAC Soft Brown',
-    desc: '柔和大地棕，可用于眼窝和鼻影过渡。',
-    price: 219,
-    image: '/images/products/docx/eye009-soft-brown.png',
-    category: 'makeup',
-    tags: ['Docx导入', 'PCA推荐'],
-    season: 'all',
-    colorType: 'warm',
-    colorHex: '#8D6A55',
-    colorName: '柔棕色'
-  },
-  {
-    id: 'EYE003',
-    sku: 'EYE003',
-    name: 'MAC Satin Taupe',
-    desc: '带微光感的灰棕色，适合加强眼部层次。',
-    price: 219,
-    image: '/images/products/docx/eye003-satin-taupe.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入'],
-    season: 'all',
-    colorType: 'cool',
-    colorHex: '#7E726E',
-    colorName: '缎光灰棕'
-  },
-  {
-    id: 'BAS004',
-    sku: 'BAS004',
-    name: 'MAC NC25',
-    desc: '自然中性偏暖底妆色，适配多数亚洲肤色。',
-    price: 319,
-    image: '/images/products/docx/bas004-nc25.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入', '热门试用'],
-    season: 'all',
-    colorType: 'neutral',
-    colorHex: '#C79B7D',
-    colorName: '自然米肤'
-  },
-  {
-    id: 'BRO009',
-    sku: 'BRO009',
-    name: 'ABH Brow Wiz Soft Brown',
-    desc: '细芯眉笔，适合快速勾勒自然毛流眉。',
-    price: 179,
-    image: '/images/products/docx/bro009-soft-brown.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入'],
-    season: 'all',
-    colorType: 'neutral',
-    colorHex: '#5E4A3C',
-    colorName: '柔和深棕'
-  },
-  {
-    id: 'CON019',
-    sku: 'CON019',
-    name: 'Benefit Hoola Original',
-    desc: '经典修容色，增强下颌线和面部立体感。',
-    price: 259,
-    image: '/images/products/docx/con019-hoola-original.jpeg',
-    category: 'makeup',
-    tags: ['Docx导入', 'PCA推荐'],
-    season: 'all',
-    colorType: 'warm',
-    colorHex: '#8A684E',
-    colorName: '暖棕修容'
-  }
-]
+const products = ref([])
+const cart = ref([])
 
-// 响应式产品列表
-const products = ref<any[]>([])
-const loading = ref(false)
+const cartTotalQuantity = computed(() => {
+  return cart.value.reduce((sum, item) => sum + item.quantity, 0)
+})
+
+const cartTotalPrice = computed(() => {
+  return cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+})
 
 const loadProducts = async () => {
-  // 默认先展示 docx 商品，保证页面可见
-  products.value = [...docxProducts]
-  loading.value = true
-  console.log('>>> [Debug] 开始获取推荐商品列表...')
-  try {
-    const res = await getProductRecommendationsApi({
-      season: filterSeason.value || undefined,
-      category: filterCategory.value || undefined,
-      limit: 20
-    })
-    console.log('>>> [Debug] 推荐商品响应:', res)
-    const isSuccessCode = res?.code === 0 || res?.code === 200 || res?.code === undefined
-    const apiProducts = Array.isArray(res?.data?.products) ? res.data.products : []
-    if (isSuccessCode && apiProducts.length > 0) {
-      const normalizedApiProducts = apiProducts.map((p: any) => ({
-        id: p.id || p.sku_id,
-        sku: p.sku_id,
-        name: p.name,
-        desc: p.description,
-        price: p.price,
-        image: p.image_url,
-        category: p.category_name || 'makeup',
-        tags: p.tags || ['PCA推荐'],
-        season: p.season_suitability || 'all',
-        colorType: p.color_tone || 'neutral',
-        colorHex: p.color_hex,
-        colorName: p.color_name
-      }))
-
-      // 合并去重：同 sku 以后端数据为准，保留 docx 图文作兜底
-      const merged = [...docxProducts]
-      normalizedApiProducts.forEach((item: any) => {
-        const idx = merged.findIndex(p => p.sku === item.sku)
-        if (idx >= 0) {
-          merged[idx] = {
-            ...merged[idx],
-            ...item,
-            category: ['skincare', 'makeup', 'tools'].includes(item.category) ? item.category : 'makeup'
-          }
-        } else {
-          merged.push({
-            ...item,
-            category: ['skincare', 'makeup', 'tools'].includes(item.category) ? item.category : 'makeup'
-          })
-        }
-      })
-      products.value = merged
-    }
-  } catch (error) {
-    console.error('>>> [Debug] 获取推荐商品异常:', error)
-    ElMessage.warning('推荐接口暂不可用，已展示文档商品')
-  } finally {
-    loading.value = false
+  const season = route.query.season as string || filterSeason.value
+  const category = filterCategory.value
+  
+  const result = await getProducts(season, category, 50)
+  if (result && result.products) {
+    products.value = result.products
   }
+}
+
+const viewProduct = (product) => {
+  router.push({ name: 'ProductDetail', params: { id: product.product_id } })
+}
+
+const updateQuantity = (productId, quantity) => {
+  if (quantity <= 0) {
+    removeFromCart(productId)
+    return
+  }
+  const item = cart.value.find(item => item.product_id === productId)
+  if (item) {
+    item.quantity = quantity
+    localStorage.setItem('cart', JSON.stringify(cart.value))
+  }
+}
+
+const removeFromCart = (productId) => {
+  cart.value = cart.value.filter(item => item.product_id !== productId)
+  localStorage.setItem('cart', JSON.stringify(cart.value))
+}
+
+const checkout = () => {
+  alert('结算功能开发中')
 }
 
 onMounted(() => {
-  if (route.query.season) filterSeason.value = route.query.season as string
-  if (route.query.color) filterColor.value = route.query.color as string
   loadProducts()
-})
-
-const expandedCategories = ref<Record<string, boolean>>({})
-
-const cart = ref<any[]>([])
-const drawerVisible = ref(false)
-
-const totalPrice = computed(() => {
-  return cart.value.reduce((sum, item) => sum + Number(item.price), 0)
-})
-
-const getCategoryLabel = (cat: string | number) => {
-  const map: Record<string, string> = {
-    skincare: '护肤',
-    makeup: '彩妆',
-    tools: '工具'
-  }
-  return map[cat] || '其他'
-}
-
-const groupedProducts = computed(() => {
-  // 1. 过滤
-  let filtered = products.value.filter(p => {
-    if (filterSeason.value && p.season !== 'all' && p.season !== filterSeason.value) return false
-    if (filterColor.value && p.colorType !== 'neutral' && p.colorType !== filterColor.value) return false
-    if (filterCategory.value && p.category !== filterCategory.value) return false
-    return true
-  })
-
-  // 2. 排序
-  filtered = filtered.sort((a, b) => {
-    if (sortOrder.value === 'price_asc') return Number(a.price) - Number(b.price)
-    if (sortOrder.value === 'price_desc') return Number(b.price) - Number(a.price)
-    // recommend: we'll randomly place PCA推荐 at the top
-    const aRec = a.tags.includes('PCA推荐') ? 1 : 0
-    const bRec = b.tags.includes('PCA推荐') ? 1 : 0
-    return bRec - aRec
-  })
-
-  // 3. 分组
-  const groups: Record<string, any[]> = {}
-  filtered.forEach(p => {
-    if (!groups[p.category]) {
-      groups[p.category] = []
-    }
-    groups[p.category]!.push(p)
-  })
   
-  return groups
-})
-
-const getVisibleProducts = (category: string | number, items: any[]) => {
-  if (expandedCategories.value[category]) {
-    return items
+  const savedCart = localStorage.getItem('cart')
+  if (savedCart) {
+    cart.value = JSON.parse(savedCart)
   }
-  return items.slice(0, 4)
-}
-
-const handleAddToCart = (product: any) => {
-  cart.value.push({ ...product })
-  ElMessage.success(`已将【${product.name}】加入购物车`)
-}
-
-const removeFromCart = (index: number) => {
-  const item = cart.value[index]
-  cart.value.splice(index, 1)
-  ElMessage.info(`已从购物车移除【${item.name}】`)
-}
-
-const handleCheckout = () => {
-  ElMessage.success('结算功能正在开发中，即将跳转支付页面...')
-}
-
-const handleTryOn = (product: any) => {
-  // Mock logic to determine if user has a stored photo
-  // Here we use ElMessageBox to simulate the two states for the user to test
-  ElMessageBox.confirm(
-    '【前端模拟场景选择】当前用户在个人中心是否已经保存过照片？',
-    '是否已有照片记录？',
-    {
-      distinguishCancelAndClose: true,
-      confirmButtonText: '已保存过照片 (跳转试妆)',
-      cancelButtonText: '没有照片 (引导上传)',
-      type: 'info'
-    }
-  )
-    .then(() => {
-      // Flow 1: Has Photo -> Redirect to ResultView to render automatically
-      ElMessage.success(`读取到个人照片记录，正在为您试用【${product.name}】...`)
-      setTimeout(() => {
-        router.push({
-          path: '/result',
-          query: {
-            // we mock an img URL so the Result page has something to use as 'original'
-            img: 'https://via.placeholder.com/600x800.png?text=Saved+User+Photo',
-            auto_apply_product: product.id 
-          }
-        })
-      }, 1000)
-    })
-    .catch((action) => {
-      if (action === 'cancel') {
-        // Flow 2: No Photo -> Redirect to UploadView
-        ElMessage.warning('未检测到您的照片档案，请先上传照片。')
-        setTimeout(() => {
-          router.push('/upload')
-        }, 1000)
-      }
-    })
-}
+  
+  if (route.query.season) {
+    filterSeason.value = route.query.season as string
+  }
+})
 </script>
 
 <style scoped>
 .shop-container {
-  position: relative;
   min-height: 100vh;
-  width: 100%;
-  background: #f3f4f6;
-  color: #1f2937;
-  overflow-x: hidden;
+  position: relative;
 }
 
 .content-wrapper {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 16px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  background: linear-gradient(to right, #10b981, #059669);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.logo-wrapper {
   cursor: pointer;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+}
+
+.nav-btn {
+  color: #64748b;
+  font-weight: 500;
 }
 
 .cart-icon-wrapper {
+  position: relative;
   cursor: pointer;
 }
 
-.header-cart-btn {
-  font-size: 20px;
-  border-color: #10b981;
-  color: #10b981;
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
 }
 
-.header-cart-btn:hover {
-  background: #10b9811a;
+.header-cart-btn {
+  font-size: 24px;
+  color: #2E7D32;
 }
 
 .main-content {
-  flex: 1;
-  padding: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
+  padding-top: 80px;
+  padding-left: 40px;
+  padding-right: 40px;
+  padding-bottom: 60px;
 }
 
 .hero-section {
   text-align: center;
-  margin-bottom: 60px;
-  animation: fadeInDown 1s ease-out;
+  margin-bottom: 40px;
 }
 
 .page-title {
-  font-size: 48px;
-  margin-bottom: 16px;
-  background: linear-gradient(to right, #111827, #374151);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: 4px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  font-size: 18px;
-  color: #6b7280;
-  letter-spacing: 2px;
+  color: #64748b;
+  font-size: 16px;
 }
 
 .filter-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  gap: 32px;
   justify-content: center;
   margin-bottom: 40px;
-  animation: fadeInDown 1s ease-out 0.1s backwards;
+  padding: 20px 30px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
 }
 
 .filter-group {
   display: flex;
   align-items: center;
-  background: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  gap: 12px;
 }
 
 .filter-label {
   font-size: 14px;
-  color: #4b5563;
-  margin-right: 10px;
+  color: #64748b;
   font-weight: 500;
 }
 
 .filter-select {
-  width: 130px;
-}
-
-.filter-select :deep(.el-input__wrapper) {
-  box-shadow: none !important;
-  background-color: #f9fafb;
-  border-radius: 6px;
-}
-
-.empty-state {
-  margin-top: 60px;
-  animation: fadeInDown 1s ease-out 0.2s backwards;
-}
-
-.category-section {
-  margin-bottom: 50px;
-  animation: fadeInUp 1s ease-out 0.2s backwards;
-}
-
-.category-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #10b981;
-  display: inline-block;
-}
-
-.view-more-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.view-more-btn {
-  padding: 10px 24px;
+  width: 140px;
 }
 
 .products-grid {
-  /* removed animation to let category block handle it */
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .product-card {
-  background: #ffffff;
+  background: white;
   border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 30px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .product-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
 }
 
-.product-image {
+.product-image-wrapper {
   position: relative;
   height: 200px;
   overflow: hidden;
 }
 
-.product-img-container {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.real-product-img {
+.product-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
 }
 
-.product-card:hover .real-product-img {
-  transform: scale(1.1);
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.product-card:hover .overlay {
-  opacity: 1;
-}
-
-.sku-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(16, 185, 129, 0.9);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  z-index: 2;
-}
-
-.product-info {
-  padding: 20px;
-  text-align: left; /* changed from center to left for better sku/cart layout */
-}
-
-.product-name {
-  font-size: 18px;
-  margin-bottom: 8px;
-  color: #111827;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tags-container {
+.product-tags {
   position: absolute;
   top: 10px;
   left: 10px;
   display: flex;
   gap: 6px;
-  z-index: 2;
-  flex-wrap: wrap;
 }
 
-.product-tag {
-  border: none;
-  font-weight: 500;
-  border-radius: 4px;
+.product-info {
+  padding: 16px;
 }
 
-.color-preview {
-  display: flex;
-  align-items: center;
+.product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-brand {
+  font-size: 12px;
+  color: #94a3b8;
   margin-bottom: 8px;
 }
 
-.color-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
-  border: 1px solid rgba(0,0,0,0.1);
-}
-
-.color-name {
-  font-size: 13px;
-  color: #4b5563;
-}
-
-.product-desc {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 16px;
-  height: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.price-action-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 12px;
-}
-
 .product-price {
-  font-size: 20px;
-  color: #10b981;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 700;
+  color: #E65100;
+  margin-bottom: 8px;
 }
 
-.sku-actions {
+.product-colors {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.color-label {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.color-dots {
+  display: flex;
+  gap: 6px;
 }
 
-/* Cart Drawer Styles */
+.color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+}
+
 .cart-content {
-  padding: 10px;
+  padding: 20px;
+  height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
 .empty-cart {
-  padding-top: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  margin-bottom: 16px;
 }
 
 .cart-items {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  margin-bottom: 24px;
 }
 
 .cart-item {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 1px solid #f3f4f6;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.cart-item-img {
-  width: 60px;
-  height: 60px;
+.cart-item-image {
+  width: 80px;
+  height: 80px;
   border-radius: 8px;
   object-fit: cover;
 }
@@ -865,53 +454,67 @@ const handleTryOn = (product: any) => {
 }
 
 .cart-item-name {
-  font-weight: 600;
   font-size: 14px;
-  color: #111827;
-  margin-bottom: 4px;
-}
-
-.cart-item-sku {
-  font-size: 12px;
-  color: #6b7280;
+  font-weight: 600;
+  color: #1a1a1a;
   margin-bottom: 4px;
 }
 
 .cart-item-price {
-  font-weight: bold;
-  color: #10b981;
+  font-size: 14px;
+  font-weight: 600;
+  color: #E65100;
+  margin-bottom: 8px;
+}
+
+.cart-item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-summary {
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
   font-size: 14px;
 }
 
-.cart-footer {
-  padding: 20px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.total-price {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.summary-row.total {
   font-size: 18px;
-  font-weight: bold;
-}
-
-.price-value {
-  color: #10b981;
-  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16px;
 }
 
 .checkout-btn {
   width: 100%;
-  height: 50px;
-  background: #10b981;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
+  border-radius: 8px;
 }
 
-.checkout-btn:hover {
-  background: #059669;
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 12px 20px;
+  }
+  
+  .filter-bar {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

@@ -6,15 +6,14 @@
     <!-- Main Content Area -->
     <main class="hero-section" :class="{ 'shifted': isLoginOpen }">
       <header class="logo-area">
-        <div class="logo">
-          <img src="../assets/login/logonewnew.png" alt="颜选MenX Logo" class="logo-img">
-          颜选MenX
+        <div class="logo-wrapper">
+          <img src="../assets/brand/yanxuan-menx-logo.png" alt="颜选MenX" class="logo-img">
         </div>
       </header>
 
       <div class="content-wrapper">
-        <h1 class="hero-title">光影随心 <br> 重塑 <span class="highlight">非凡真我</span></h1>
-        <p class="hero-subtitle">智能矫正与专属风格男妆，一键开启影像新视界。</p>
+        <h1 class="hero-title">颜选MenX <br> 发现 <span class="highlight">更好的自己</span></h1>
+        <p class="hero-subtitle">AI智能矫正，专属男妆定制，开启你的魅力新视界。</p>
       </div>
 
       <!-- Dynamic Image Gallery -->
@@ -735,20 +734,16 @@ onUnmounted(() => {
 }
 
 /* Logo */
-.logo {
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: #2E7D32;
+.logo-wrapper {
   position: absolute;
   top: 2rem;
   left: 4rem;
-  display: flex;
-  align-items: center;
+  cursor: pointer;
 }
 
 .logo-img {
-  height: 80px;
-  margin-right: 10px;
+  height: 60px;
+  width: auto;
 }
 
 /* Interaction Trigger */
