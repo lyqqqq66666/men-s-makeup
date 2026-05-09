@@ -38,36 +38,52 @@ import ModernBackground from '../components/ModernBackground.vue'
 import { InfoFilled, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElLoading } from 'element-plus'
+import { createMakeupSessionApi } from '@/api/makeup'
 
 const router = useRouter()
 const isHovering = ref(false)
 
 const handleUploadSuccess = async (data: { file: File, url: string }) => {
-  // Show loading
   const loading = ElLoading.service({
     lock: true,
-    text: '正在进行智能检测与分析... (体验模式)',
+    text: '正在创建试妆会话...',
     background: 'rgba(0, 0, 0, 0.7)',
   })
 
   try {
-    // 模拟上传和处理延迟
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    console.log('>>> [Debug] UploadView handleUploadSuccess. File:', data.file.name)
 
-    // 体验模式：跳过后端真实请求，直接使用上传的原图作为展示进入后续加工页面
-    const mockProcessedUrl = URL.createObjectURL(data.file)
+    // 仅创建试妆 Session，跳过分析流程，直接进入化妆页
+    const formData = new FormData()
+    formData.append('image', data.file)
 
-    ElMessage.success('照片解析成功！')
-    router.push({ 
-      name: 'PcaResult', 
-      query: { 
-        img: mockProcessedUrl // 携带图片地址进入全新的 PCA 色彩结果页
-      } 
+    console.log('>>> [Debug] 准备调用 createMakeupSessionApi...')
+    const sessionRes = await createMakeupSessionApi(formData, true) as any
+    console.log('>>> [Debug] createMakeupSessionApi 响应:', sessionRes)
+
+    const sessionId =
+      sessionRes?.data?.session_id ||
+      sessionRes?.session_id ||
+      ''
+    const code = sessionRes?.code
+    const isCodeSuccess = code === 0 || code === 200 || code === undefined || code === null
+
+    if (!isCodeSuccess || !sessionId) {
+      throw new Error(sessionRes.message || '试妆会话创建失败')
+    }
+
+    ElMessage.success('上传成功，已进入化妆页')
+    router.push({
+      name: 'Result',
+      query: {
+        img: data.url,
+        season: '温润秋季型',
+        session_id: sessionId
+      }
     })
-    
-  } catch (error) {
-    console.error('Mock Upload processing error:', error)
-    ElMessage.error('模拟处理失败，请重试')
+  } catch (error: any) {
+    console.error('>>> [Debug] Upload processing error:', error)
+    ElMessage.error(error.message || '上传失败，请重试')
   } finally {
     loading.close()
   }

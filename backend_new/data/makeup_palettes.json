@@ -1,0 +1,411 @@
+{
+  "version": "1.0.0",
+  "description": "智颜方正 - 男士化妆品色号体系定义",
+  "categories": {
+    "base": {
+      "name": "底妆",
+      "apply_area": "skin",
+      "description": "男士底妆产品，追求自然轻薄妆效",
+      "finish_types": ["matte", "semi-matte", "dewy", "natural"],
+      "palettes": {
+        "ivory": {
+          "shade_name": "象牙白",
+          "hex_color": "#F5E6D3",
+          "render_hex": "#F0DFC8",
+          "skin_tone_match": ["fair", "light"],
+          "season_types": ["Cool Winter", "Cool Spring"]
+        },
+        "natural": {
+          "shade_name": "自然色",
+          "hex_color": "#E8D4C4",
+          "render_hex": "#E0C8B4",
+          "skin_tone_match": ["light", "medium"],
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "beige": {
+          "shade_name": "米色",
+          "hex_color": "#DFC5A8",
+          "render_hex": "#D5B898",
+          "skin_tone_match": ["medium"],
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "sand": {
+          "shade_name": "沙色",
+          "hex_color": "#D4B896",
+          "render_hex": "#C8A880",
+          "skin_tone_match": ["medium", "tan"],
+          "season_types": ["Warm Autumn", "Cool Autumn"]
+        },
+        "wheat": {
+          "shade_name": "小麦色",
+          "hex_color": "#C8A882",
+          "render_hex": "#BC9A72",
+          "skin_tone_match": ["tan", "dark"],
+          "season_types": ["Warm Autumn", "Deep Autumn"]
+        },
+        "caramel": {
+          "shade_name": "焦糖色",
+          "hex_color": "#B89468",
+          "render_hex": "#A88458",
+          "skin_tone_match": ["tan", "dark"],
+          "season_types": ["Deep Autumn", "Deep Winter"]
+        },
+        "espresso": {
+          "shade_name": "浓缩咖啡",
+          "hex_color": "#8B7355",
+          "render_hex": "#7A6248",
+          "skin_tone_match": ["dark"],
+          "season_types": ["Deep Winter", "Deep Autumn"]
+        }
+      }
+    },
+    "brow": {
+      "name": "眉部",
+      "apply_area": "brow",
+      "description": "男士眉部产品，强调自然立体眉形",
+      "finish_types": ["matte", "natural", "semi-matte"],
+      "palettes": {
+        "soft_black": {
+          "shade_name": "柔黑",
+          "hex_color": "#2C2C2C",
+          "render_hex": "#383838",
+          "hair_tone_match": ["black", "dark_brown"],
+          "season_types": ["Cool Winter", "Deep Winter"]
+        },
+        "natural_black": {
+          "shade_name": "自然黑",
+          "hex_color": "#333333",
+          "render_hex": "#404040",
+          "hair_tone_match": ["black"],
+          "season_types": ["Cool Winter", "Deep Winter"]
+        },
+        "dark_brown": {
+          "shade_name": "深棕",
+          "hex_color": "#4A3728",
+          "render_hex": "#5A4738",
+          "hair_tone_match": ["dark_brown", "brown"],
+          "season_types": ["Warm Autumn", "Deep Autumn"]
+        },
+        "espresso_brown": {
+          "shade_name": "浓缩棕",
+          "hex_color": "#3E2F23",
+          "render_hex": "#4E3F33",
+          "hair_tone_match": ["dark_brown"],
+          "season_types": ["Cool Autumn", "Deep Autumn"]
+        },
+        "ash_brown": {
+          "shade_name": "灰棕",
+          "hex_color": "#5A5A5A",
+          "render_hex": "#6A6A6A",
+          "hair_tone_match": ["gray", "light_brown"],
+          "season_types": ["Cool Spring", "Cool Winter"]
+        },
+        "warm_brown": {
+          "shade_name": "暖棕",
+          "hex_color": "#6B4226",
+          "render_hex": "#7B5236",
+          "hair_tone_match": ["brown", "auburn"],
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "light_brown": {
+          "shade_name": "浅棕",
+          "hex_color": "#7A6652",
+          "render_hex": "#8A7662",
+          "hair_tone_match": ["light_brown"],
+          "season_types": ["Warm Spring", "Cool Spring"]
+        },
+        "graphite": {
+          "shade_name": "石墨灰",
+          "hex_color": "#4A4A4A",
+          "render_hex": "#5A5A5A",
+          "hair_tone_match": ["gray", "salt_pepper"],
+          "season_types": ["Cool Winter", "Cool Spring"]
+        }
+      }
+    },
+    "eye": {
+      "name": "眼部",
+      "apply_area": "eyes",
+      "description": "男士眼部产品，以大地色系为主，低调自然",
+      "finish_types": ["matte", "shimmer", "satin", "semi-matte"],
+      "palettes": {
+        "earth_tone": {
+          "shade_name": "大地色",
+          "hex_color": "#8B7355",
+          "render_hex": "#9A8365",
+          "season_types": ["Warm Autumn", "Warm Spring"]
+        },
+        "dark_brown_eye": {
+          "shade_name": "深棕",
+          "hex_color": "#5C4033",
+          "render_hex": "#6C5043",
+          "season_types": ["Deep Autumn", "Cool Autumn"]
+        },
+        "taupe": {
+          "shade_name": "灰棕",
+          "hex_color": "#696969",
+          "render_hex": "#797979",
+          "season_types": ["Cool Winter", "Cool Spring"]
+        },
+        "warm_beige": {
+          "shade_name": "暖米",
+          "hex_color": "#C4A882",
+          "render_hex": "#D0B892",
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "bronze": {
+          "shade_name": "古铜",
+          "hex_color": "#A0784C",
+          "render_hex": "#B0885C",
+          "season_types": ["Warm Autumn", "Deep Autumn"]
+        },
+        "charcoal": {
+          "shade_name": "炭灰",
+          "hex_color": "#3C3C3C",
+          "render_hex": "#4C4C4C",
+          "season_types": ["Cool Winter", "Deep Winter"]
+        },
+        "khaki": {
+          "shade_name": "卡其",
+          "hex_color": "#BDB76B",
+          "render_hex": "#C8C278",
+          "season_types": ["Warm Spring", "Cool Spring"]
+        },
+        "mocha": {
+          "shade_name": "摩卡",
+          "hex_color": "#7B6B5A",
+          "render_hex": "#8B7B6A",
+          "season_types": ["Warm Autumn", "Cool Autumn"]
+        },
+        "slate": {
+          "shade_name": "石板灰",
+          "hex_color": "#708090",
+          "render_hex": "#8090A0",
+          "season_types": ["Cool Winter", "Cool Summer"]
+        },
+        "copper": {
+          "shade_name": "铜色",
+          "hex_color": "#B87333",
+          "render_hex": "#C88343",
+          "season_types": ["Warm Autumn", "Deep Autumn"]
+        }
+      }
+    },
+    "lip": {
+      "name": "唇部",
+      "apply_area": "lips",
+      "description": "男士唇部产品，追求自然低调的润色效果",
+      "finish_types": ["matte", "semi-matte", "gloss", "natural"],
+      "palettes": {
+        "nude_beige": {
+          "shade_name": "自然裸色",
+          "hex_color": "#C98B7B",
+          "render_hex": "#D09B8B",
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "rose_mauve": {
+          "shade_name": "玫瑰豆沙",
+          "hex_color": "#B14A5A",
+          "render_hex": "#C15A6A",
+          "season_types": ["Cool Winter", "Cool Summer"]
+        },
+        "coral": {
+          "shade_name": "珊瑚橘",
+          "hex_color": "#E07A5F",
+          "render_hex": "#E88A6F",
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "berry_tint": {
+          "shade_name": "浆果轻染",
+          "hex_color": "#9B3A4E",
+          "render_hex": "#AB4A5E",
+          "season_types": ["Deep Winter", "Deep Autumn"]
+        },
+        "rosewood": {
+          "shade_name": "花梨木",
+          "hex_color": "#A0524C",
+          "render_hex": "#B0625C",
+          "season_types": ["Warm Autumn", "Cool Autumn"]
+        },
+        "soft_rose": {
+          "shade_name": "柔粉",
+          "hex_color": "#D4A0A0",
+          "render_hex": "#DEB0B0",
+          "season_types": ["Cool Spring", "Cool Summer"]
+        },
+        "terracotta": {
+          "shade_name": "陶土色",
+          "hex_color": "#C4714E",
+          "render_hex": "#D4815E",
+          "season_types": ["Warm Autumn", "Deep Autumn"]
+        },
+        "nude_pink": {
+          "shade_name": "裸粉",
+          "hex_color": "#D9A9A0",
+          "render_hex": "#E3B9B0",
+          "season_types": ["Warm Spring", "Cool Spring"]
+        },
+        "brick_red": {
+          "shade_name": "砖红",
+          "hex_color": "#8B3A3A",
+          "render_hex": "#9B4A4A",
+          "season_types": ["Deep Winter", "Deep Autumn"]
+        },
+        "caramel_lip": {
+          "shade_name": "焦糖",
+          "hex_color": "#B8866B",
+          "render_hex": "#C8967B",
+          "season_types": ["Warm Autumn", "Warm Spring"]
+        }
+      }
+    },
+    "contour": {
+      "name": "修容",
+      "apply_area": "cheeks",
+      "description": "男士修容产品，打造立体轮廓",
+      "finish_types": ["matte", "natural", "semi-matte"],
+      "palettes": {
+        "light_bronze": {
+          "shade_name": "浅古铜",
+          "hex_color": "#C4A882",
+          "render_hex": "#D0B892",
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        },
+        "warm_bronze": {
+          "shade_name": "暖古铜",
+          "hex_color": "#A68B5B",
+          "render_hex": "#B69B6B",
+          "season_types": ["Warm Autumn", "Deep Autumn"]
+        },
+        "cool_contour": {
+          "shade_name": "冷调修容",
+          "hex_color": "#8B7D6B",
+          "render_hex": "#9B8D7B",
+          "season_types": ["Cool Winter", "Cool Summer"]
+        },
+        "deep_brown_contour": {
+          "shade_name": "深棕修容",
+          "hex_color": "#8B6914",
+          "render_hex": "#9B7924",
+          "season_types": ["Deep Autumn", "Deep Winter"]
+        },
+        "soft_sculpt": {
+          "shade_name": "柔和塑形",
+          "hex_color": "#B8A088",
+          "render_hex": "#C8B098",
+          "season_types": ["Warm Spring", "Cool Spring"]
+        },
+        "natural_shadow": {
+          "shade_name": "自然阴影",
+          "hex_color": "#9E8E7E",
+          "render_hex": "#AE9E8E",
+          "season_types": ["Cool Autumn", "Warm Autumn"]
+        },
+        "cool_shadow": {
+          "shade_name": "冷灰阴影",
+          "hex_color": "#7A7A7A",
+          "render_hex": "#8A8A8A",
+          "season_types": ["Cool Winter", "Cool Summer"]
+        },
+        "warm_highlight": {
+          "shade_name": "暖调高光",
+          "hex_color": "#E8D5B7",
+          "render_hex": "#F0E0C5",
+          "season_types": ["Warm Spring", "Warm Autumn"]
+        }
+      }
+    }
+  },
+  "season_types": {
+    "Warm Spring": {
+      "tone": "warm",
+      "description": "暖春型 - 暖调明亮",
+      "lips_palette": ["#C98B7B", "#E07A5F", "#D9A9A0", "#B8866B"],
+      "cheeks_palette": ["#C4A882", "#B8A088", "#E8D5B7", "#A68B5B"],
+      "brow_palette": ["#4A3728", "#6B4226", "#7A6652", "#5A5A5A"],
+      "avoid_palette": ["#9B3A4E", "#3C3C3C", "#708090", "#7A7A7A"]
+    },
+    "Cool Winter": {
+      "tone": "cool",
+      "description": "冷冬型 - 冷调深沉",
+      "lips_palette": ["#B14A5A", "#9B3A4E", "#8B3A3A", "#D4A0A0"],
+      "cheeks_palette": ["#8B7D6B", "#7A7A7A", "#9E8E7E", "#8B6914"],
+      "brow_palette": ["#2C2C2C", "#333333", "#4A4A4A", "#5A5A5A"],
+      "avoid_palette": ["#E07A5F", "#B87333", "#C4A882", "#E8D5B7"]
+    },
+    "Warm Autumn": {
+      "tone": "warm",
+      "description": "暖秋型 - 暖调沉稳",
+      "lips_palette": ["#C98B7B", "#C4714E", "#A0524C", "#B8866B"],
+      "cheeks_palette": ["#A68B5B", "#C4A882", "#9E8E7E", "#8B6914"],
+      "brow_palette": ["#4A3728", "#6B4226", "#3E2F23", "#7A6652"],
+      "avoid_palette": ["#D4A0A0", "#708090", "#B14A5A", "#7A7A7A"]
+    },
+    "Cool Summer": {
+      "tone": "cool",
+      "description": "冷夏型 - 冷调柔和",
+      "lips_palette": ["#B14A5A", "#D4A0A0", "#D9A9A0", "#A0524C"],
+      "cheeks_palette": ["#8B7D6B", "#B8A088", "#7A7A7A", "#9E8E7E"],
+      "brow_palette": ["#5A5A5A", "#4A4A4A", "#7A6652", "#3E2F23"],
+      "avoid_palette": ["#E07A5F", "#8B3A3A", "#B87333", "#8B6914"]
+    }
+  },
+  "brands": [
+    {
+      "name": "杰威尔",
+      "name_en": "Jiewell",
+      "origin": "中国",
+      "positioning": "专业男士彩妆",
+      "price_range": [89, 299]
+    },
+    {
+      "name": "曼秀雷敦男士",
+      "name_en": "Mentholatum Men",
+      "origin": "日本/美国",
+      "positioning": "大众男士护理彩妆",
+      "price_range": [39, 129]
+    },
+    {
+      "name": "欧莱雅男士",
+      "name_en": "L'Oreal Men Expert",
+      "origin": "法国",
+      "positioning": "国际男士护肤彩妆",
+      "price_range": [79, 259]
+    },
+    {
+      "name": "兰蔻",
+      "name_en": "Lancome",
+      "origin": "法国",
+      "positioning": "高端男士护肤彩妆",
+      "price_range": [199, 599]
+    },
+    {
+      "name": "MAC",
+      "name_en": "MAC",
+      "origin": "加拿大",
+      "positioning": "专业彩妆（男士线）",
+      "price_range": [159, 399]
+    },
+    {
+      "name": "碧欧泉男士",
+      "name_en": "Biotherm Homme",
+      "origin": "法国",
+      "positioning": "高端男士护肤",
+      "price_range": [249, 699]
+    },
+    {
+      "name": "科颜氏男士",
+      "name_en": "Kiehl's Men",
+      "origin": "美国",
+      "positioning": "天然成分男士护肤彩妆",
+      "price_range": [179, 459]
+    },
+    {
+      "name": "香奈儿男士",
+      "name_en": "Chanel Men",
+      "origin": "法国",
+      "positioning": "奢侈男士彩妆",
+      "price_range": [299, 899]
+    }
+  ]
+}

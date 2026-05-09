@@ -5,7 +5,7 @@
     
     <div class="content-wrapper">
       <header class="header" :class="{ 'header-hidden': !headerVisible }">
-        <div class="logo">智颜方正</div>
+        <div class="logo">颜选MenX</div>
         <div class="header-right">
           <div class="nav-item" @click="router.push('/shop')">
             <el-icon class="nav-icon"><Goods /></el-icon>
@@ -81,7 +81,7 @@
       </main>
 
       <footer class="footer" v-if="showShowcase">
-        <p>© 2025 智颜方正 Team. All Rights Reserved.</p>
+        <p>© 2025 颜选MenX Team. All Rights Reserved.</p>
       </footer>
     </div>
   </div>

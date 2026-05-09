@@ -185,6 +185,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import ImageComparison from '../components/ImageComparison.vue'
 import { Back, Refresh, Download, Star, Check, Close, StarFilled, ArrowLeft } from '@element-plus/icons-vue'
+import { 
+  applyMakeupApi, 
+  undoMakeupApi, 
+  resetMakeupApi, 
+  saveMakeupSchemeApi
+} from '@/api/makeup'
 
 const route = useRoute()
 const router = useRouter()
@@ -196,6 +202,7 @@ const processing = ref(false)
 const processingStyle = ref(false)
 const processingStep = ref(false)
 const loadingText = ref('')
+const sessionId = ref('')
 
 const params = ref({
   style: 'clean'
@@ -255,6 +262,12 @@ const planSaved = ref(false)
 onMounted(() => {
   const img = route.query.img as string
   const season = route.query.season as string
+  const sid = route.query.session_id as string
+
+  if (sid) {
+    sessionId.value = sid
+    console.log('>>> [Debug] ResultView onMounted. Session ID:', sid)
+  }
 
   if (img) {
     originalImage.value = img
@@ -274,9 +287,19 @@ onMounted(() => {
   }
 })
 
-const handleUndo = () => {
-  ElMessage.info('已撤销上一步操作')
-  canUndo.value = false
+const handleUndo = async () => {
+  if (!sessionId.value) return
+  try {
+    console.log('>>> [Debug] 准备调用 undoMakeupApi...')
+    const res = await undoMakeupApi({ session_id: sessionId.value }) as any
+    console.log('>>> [Debug] undoMakeupApi 响应:', res)
+    if (res.code === 200) {
+      currentResultImage.value = res.data.rendered_image_url
+      ElMessage.info('已撤销上一步操作')
+    }
+  } catch (error) {
+    ElMessage.error('撤销失败')
+  }
 }
 
 // 模拟分离：一键全妆渲染
@@ -317,36 +340,48 @@ const handleApplyFullStyle = async () => {
 // 模拟分离：精细单步渲染 (配合商品应用)
 const handleApplyStep = async (product?: any) => {
   if (activeStep.value < 2) return
+  if (!sessionId.value) {
+    ElMessage.warning('试妆会话失效，请重新上传')
+    return
+  }
   
   processingStep.value = true
   processing.value = true
 
   const currentPart = stepNameMap[currentMakeupStep.value] || '部分'
-  
   loadingText.value = `正在精准渲染局部：叠加[${currentPart}]效果...`
   
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    currentResultImage.value = originalImage.value 
-    
-    // 记录已应用的商品
-    if (product) {
-      appliedProducts.value[currentMakeupStep.value] = product
-    }
+    console.log('>>> [Debug] 准备调用 applyMakeupApi...')
+    const res = await applyMakeupApi({
+      session_id: sessionId.value,
+      product_id: product?.id?.toString() || 'default',
+      category: currentMakeupStep.value
+    }) as any
+    console.log('>>> [Debug] applyMakeupApi 响应:', res)
 
-    activeStep.value = 3
-    canUndo.value = true
-    
-    // 如果不是最后一步，引导去下一步
-    if (currentStepIndex.value < 5) {
-      currentMakeupStep.value = makeupStepsOrder[currentStepIndex.value] as string
-      ElMessage.success(`局部 [${currentPart}] 处理完成！已自动切入下一步装扮。`)
-    } else {
-      ElMessage.success(`局部 [${currentPart}] 处理完成！这是最后一步了。`)
-    }
+    if (res.code === 200) {
+      currentResultImage.value = res.data.rendered_image_url
+      
+      // 记录已应用的商品
+      if (product) {
+        appliedProducts.value[currentMakeupStep.value] = product
+      }
 
+      activeStep.value = 3
+      canUndo.value = true
+      
+      // 如果不是最后一步，引导去下一步
+      if (currentStepIndex.value < 5) {
+        currentMakeupStep.value = makeupStepsOrder[currentStepIndex.value] as string
+        ElMessage.success(`局部 [${currentPart}] 处理完成！已自动切入下一步装扮。`)
+      } else {
+        ElMessage.success(`局部 [${currentPart}] 处理完成！这是最后一步了。`)
+      }
+    }
   } catch (error: any) {
-    ElMessage.error(`生成失败: ${error.message}`)
+    console.error('>>> [Debug] applyMakeupApi error:', error)
+    ElMessage.error(`生成失败`)
   } finally {
     processingStep.value = false
     processing.value = false
@@ -364,12 +399,20 @@ const handleRevertStep = () => {
 }
 
 // 一键完全卸妆
-const handleFullClean = () => {
-  appliedProducts.value = {}
-  activeStep.value = 2
-  currentResultImage.value = ''
-  canUndo.value = false
-  ElMessage.success('全脸卸妆完毕，已重置为素颜状态。')
+const handleFullClean = async () => {
+  if (!sessionId.value) return
+  try {
+    const res = await resetMakeupApi({ session_id: sessionId.value }) as any
+    if (res.code === 200) {
+      appliedProducts.value = {}
+      activeStep.value = 2
+      currentResultImage.value = ''
+      canUndo.value = false
+      ElMessage.success('全脸卸妆完毕，已重置为素颜状态。')
+    }
+  } catch (error) {
+    ElMessage.error('重置失败')
+  }
 }
 
 const handleMainDownloadClick = () => {
@@ -406,14 +449,26 @@ const applyRecommendSet = () => {
   handleApplyFullStyle()
 }
 
-const confirmSavePlan = () => {
+const confirmSavePlan = async () => {
   if (!planForm.value.name || !planForm.value.scene) {
     ElMessage.warning('请填写完整的名称及选择对应场景标签！')
     return
   }
-  planSaved.value = true
-  savePlanDialogVisible.value = false
-  ElMessage.success('方案已作为数字资产入库！您可前往个人中心统一管理。')
+  try {
+    const res = await saveMakeupSchemeApi({
+      name: planForm.value.name,
+      session_id: sessionId.value,
+      scene_tag: planForm.value.scene,
+      description: planForm.value.reason
+    }) as any
+    if (res.code === 200) {
+      planSaved.value = true
+      savePlanDialogVisible.value = false
+      ElMessage.success('方案已作为数字资产入库！您可前往个人中心统一管理。')
+    }
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
 }
 
 const goToShop = () => {

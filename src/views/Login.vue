@@ -7,8 +7,8 @@
     <main class="hero-section" :class="{ 'shifted': isLoginOpen }">
       <header class="logo-area">
         <div class="logo">
-          <img src="../assets/login/logo.png" alt="Logo" class="logo-img">
-          智颜方正
+          <img src="../assets/login/logonewnew.png" alt="颜选MenX Logo" class="logo-img">
+          颜选MenX
         </div>
       </header>
 
@@ -84,7 +84,7 @@
           <el-form-item prop="phone">
             <el-input 
               v-model="loginForm.phone" 
-              placeholder="请输入手机号" 
+              placeholder="请输入手机号 (测试: 13434330580)" 
               class="custom-input"
             >
               <template #prefix>
@@ -96,7 +96,7 @@
             <el-input 
               v-model="loginForm.password" 
               type="password" 
-              placeholder="请输入密码" 
+              placeholder="请输入密码 (测试: 123456)" 
               show-password
               class="custom-input"
               @keyup.enter="handleLogin(loginFormRef)"
@@ -164,6 +164,20 @@
             </div>
           </el-form-item>
 
+          <el-form-item prop="confirmPassword">
+            <el-input 
+              v-model="registerForm.confirmPassword" 
+              type="password" 
+              placeholder="请确认密码" 
+              show-password
+              class="custom-input"
+            >
+              <template #prefix>
+                <el-icon><Lock /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+
           <el-form-item prop="code">
             <div class="code-input-group">
               <el-input 
@@ -228,6 +242,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { loginApi, registerApi, getVerificationCodeApi } from '../api/auth'
 import { Lock, Iphone, Key } from '@element-plus/icons-vue' // Add icon imports
 
 const router = useRouter()
@@ -246,29 +261,51 @@ const isCountingDown = ref(false)
 const countdown = ref(60)
 let timer: number | null = null
 
-const startCountdown = () => {
+const startCountdown = async () => {
+  console.log('Attempting to send code to:', registerForm.phone)
   if (isCountingDown.value) return
-  isCountingDown.value = true
-  countdown.value = 60
-  ElMessage.success('验证码已发送至 138****0000 (演示)')
-  timer = window.setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer!)
-      isCountingDown.value = false
-    }
-  }, 1000)
+  
+  if (!registerForm.phone || !/^1[3-9]\d{9}$/.test(registerForm.phone)) {
+    console.warn('Invalid phone format:', registerForm.phone)
+    ElMessage.warning('请先输入正确的手机号')
+    return
+  }
+
+  try {
+    console.log('Calling getVerificationCodeApi...')
+    const res = await getVerificationCodeApi(registerForm.phone, 'register')
+    console.log('API Response:', res)
+    
+    isCountingDown.value = true
+    countdown.value = 60
+    
+    // 如果是开发环境（可能是远程 Mock），给用户一个默认验证码的提示
+    const mockMsg = import.meta.env.DEV ? ' (开发环境下默认验证码通常为 123456)' : ''
+    ElMessage.success('验证码已发送' + mockMsg)
+    
+    timer = window.setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer!)
+        isCountingDown.value = false
+      }
+    }, 1000)
+  } catch (error) {
+    console.error('发送验证码失败:', error)
+    ElMessage.error('发送验证码失败，请检查网络或咨询管理员')
+  }
 }
 
 // --- Forms and Rules ---
 const loginForm = reactive({
-  phone: '',
-  password: ''
+  phone: import.meta.env.DEV ? '13434330580' : '',
+  password: import.meta.env.DEV ? '123456' : ''
 })
 
 const registerForm = reactive({
   phone: '',
   password: '',
+  confirmPassword: '',
   code: '',
   agreement: false
 })
@@ -286,6 +323,16 @@ const checkPasswordStrength = (val: string) => {
 const validateAgreement = (_rule: any, value: any, callback: any) => {
   if (!value) {
     callback(new Error('您必须同意用户协议与隐私政策'))
+  } else {
+    callback()
+  }
+}
+
+const validateConfirmPassword = (_rule: any, value: any, callback: any) => {
+  if (value === '') {
+    callback(new Error('请再次输入密码'))
+  } else if (value !== registerForm.password) {
+    callback(new Error('两次输入密码不一致!'))
   } else {
     callback()
   }
@@ -311,6 +358,9 @@ const registerRules = reactive<FormRules>({
     { required: true, message: '请设置密码', trigger: 'blur' },
     { min: 6, message: '密码长度至少6位', trigger: 'blur' }
   ],
+  confirmPassword: [
+    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
+  ],
   code: [
     { required: true, message: '请输入验证码', trigger: 'blur' }
   ],
@@ -331,41 +381,96 @@ const toggleAuthMode = () => {
 }
 
 const handleLogin = async (formEl: FormInstance | undefined) => {
+  console.log('handleLogin called, formEl exists:', !!formEl)
   if (!formEl) return
   
-  await formEl.validate((valid) => {
+  await formEl.validate(async (valid) => {
+    console.log('Login form validation result:', valid)
     if (valid) {
       loading.value = true
-      // Simulate API call
-      setTimeout(() => {
-        loading.value = false
-        // Allow demo login
-        if (loginForm.phone === '13800138000' && loginForm.password === '123456') {
-          const token = 'mock-token-' + Date.now()
+      try {
+        console.log('Attempting login with:', loginForm.phone)
+        const res = await loginApi({
+          phone: loginForm.phone,
+          password: loginForm.password,
+          loginType: 'password'
+        })
+        console.log('Login API response:', res)
+        
+        if (res.code === 0) {
+          const { token, user } = res.data
           userStore.setToken(token)
-          userStore.username = loginForm.phone
+          userStore.username = user.nickname || user.phone || ''
           ElMessage.success('登录成功')
           router.push('/')
         } else {
-          ElMessage.error('手机号或密码错误 (演示号: 13800138000 / 123456)')
+          // 开发环境下，如果接口返回错误码，尝试进入 Mock 登录
+          if (import.meta.env.DEV) {
+            console.warn('API returned error, falling back to local mock login:', res.message)
+            performMockLogin()
+          } else {
+            ElMessage.error(res.message || '登录失败')
+          }
         }
-      }, 1000)
+      } catch (error: any) {
+        console.error('Login error detail:', error)
+        // 开发环境下，如果请求异常（如跨域或服务挂了），尝试进入 Mock 登录
+        if (import.meta.env.DEV) {
+          console.warn('API request failed, falling back to local mock login')
+          performMockLogin()
+        } else {
+          ElMessage.error('连接服务器失败，请稍后再试')
+        }
+      } finally {
+        loading.value = false
+      }
+    } else {
+      console.warn('Login form validation failed')
     }
   })
+}
+
+/**
+ * 联调专用：模拟登录成功跳转逻辑
+ */
+const performMockLogin = () => {
+  const mockToken = 'mock_token_' + Date.now()
+  const mockUser = {
+    id: 'user_mock_13434330580',
+    nickname: '测试用户(Mock)',
+    phone: loginForm.phone
+  }
+  userStore.setToken(mockToken)
+  userStore.username = mockUser.nickname
+  ElMessage.success('登录成功 (模拟)')
+  router.push('/')
 }
 
 const handleRegister = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
   
-  await formEl.validate((valid) => {
+  await formEl.validate(async (valid) => {
     if (valid) {
       loading.value = true
-      // Simulate API call
-      setTimeout(() => {
+      try {
+        const res = await registerApi({
+          phone: registerForm.phone,
+          password: registerForm.password,
+          confirmPassword: registerForm.confirmPassword,
+          code: registerForm.code
+        })
+        
+        if (res.code === 0 || res.code === 201) {
+          ElMessage.success('注册成功，请登录')
+          toggleAuthMode()
+        } else {
+          ElMessage.error(res.message || '注册失败')
+        }
+      } catch (error: any) {
+        console.error('注册异常:', error)
+      } finally {
         loading.value = false
-        ElMessage.success('注册成功，请重新登录')
-        toggleAuthMode()
-      }, 1500)
+      }
     }
   })
 }

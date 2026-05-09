@@ -4,7 +4,7 @@
     
     <div class="content-wrapper">
       <header class="header">
-        <div class="logo" @click="router.push('/')">智颜方正</div>
+        <div class="logo" @click="router.push('/')">颜选MenX</div>
         <div class="nav-actions">
           <el-button type="text" class="nav-btn" @click="router.push('/')">返回首页</el-button>
           
@@ -177,6 +177,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ShoppingCart, Delete, ArrowDown } from '@element-plus/icons-vue'
 import ModernBackground from '../components/ModernBackground.vue'
+import { getProductRecommendationsApi } from '@/api/recommend'
 
 const router = useRouter()
 const route = useRoute()
@@ -186,24 +187,211 @@ const filterColor = ref('')
 const filterCategory = ref('')
 const sortOrder = ref('recommend')
 
+// 来自《商品部分展示图.docx》的商品清单（含导出图片）
+const docxProducts = [
+  {
+    id: 'LIP012',
+    sku: 'LIP012',
+    name: 'MAC Velvet Teddy',
+    desc: '经典哑光棕粉唇色，适合打造低调通勤妆感。',
+    price: 189,
+    image: '/images/products/docx/lip012-velvet-teddy.png',
+    category: 'makeup',
+    tags: ['Docx导入', '热门试用'],
+    season: 'all',
+    colorType: 'warm',
+    colorHex: '#A56A64',
+    colorName: '暖棕豆沙'
+  },
+  {
+    id: 'LIP002',
+    sku: 'LIP002',
+    name: 'MAC Yash',
+    desc: '偏冷裸棕调，适合日常自然男妆。',
+    price: 189,
+    image: '/images/products/docx/lip002-yash.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入'],
+    season: 'all',
+    colorType: 'neutral',
+    colorHex: '#9A7067',
+    colorName: '裸棕色'
+  },
+  {
+    id: 'LIP019',
+    sku: 'LIP019',
+    name: 'Dior Lip Glow 012 Rosewood',
+    desc: '润泽玫瑰木色，上嘴提气色不过分张扬。',
+    price: 299,
+    image: '/images/products/docx/lip019-rosewood.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入', 'PCA推荐'],
+    season: 'all',
+    colorType: 'warm',
+    colorHex: '#B76E6E',
+    colorName: '玫瑰木'
+  },
+  {
+    id: 'LIP018',
+    sku: 'LIP018',
+    name: 'Dior Lip Glow 000 Universal',
+    desc: '透明润唇型，适合素颜增亮和打底。',
+    price: 299,
+    image: '/images/products/docx/lip018-universal.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入'],
+    season: 'all',
+    colorType: 'neutral',
+    colorHex: '#E9C3B0',
+    colorName: '透明自然'
+  },
+  {
+    id: 'EYE009',
+    sku: 'EYE009',
+    name: 'MAC Soft Brown',
+    desc: '柔和大地棕，可用于眼窝和鼻影过渡。',
+    price: 219,
+    image: '/images/products/docx/eye009-soft-brown.png',
+    category: 'makeup',
+    tags: ['Docx导入', 'PCA推荐'],
+    season: 'all',
+    colorType: 'warm',
+    colorHex: '#8D6A55',
+    colorName: '柔棕色'
+  },
+  {
+    id: 'EYE003',
+    sku: 'EYE003',
+    name: 'MAC Satin Taupe',
+    desc: '带微光感的灰棕色，适合加强眼部层次。',
+    price: 219,
+    image: '/images/products/docx/eye003-satin-taupe.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入'],
+    season: 'all',
+    colorType: 'cool',
+    colorHex: '#7E726E',
+    colorName: '缎光灰棕'
+  },
+  {
+    id: 'BAS004',
+    sku: 'BAS004',
+    name: 'MAC NC25',
+    desc: '自然中性偏暖底妆色，适配多数亚洲肤色。',
+    price: 319,
+    image: '/images/products/docx/bas004-nc25.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入', '热门试用'],
+    season: 'all',
+    colorType: 'neutral',
+    colorHex: '#C79B7D',
+    colorName: '自然米肤'
+  },
+  {
+    id: 'BRO009',
+    sku: 'BRO009',
+    name: 'ABH Brow Wiz Soft Brown',
+    desc: '细芯眉笔，适合快速勾勒自然毛流眉。',
+    price: 179,
+    image: '/images/products/docx/bro009-soft-brown.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入'],
+    season: 'all',
+    colorType: 'neutral',
+    colorHex: '#5E4A3C',
+    colorName: '柔和深棕'
+  },
+  {
+    id: 'CON019',
+    sku: 'CON019',
+    name: 'Benefit Hoola Original',
+    desc: '经典修容色，增强下颌线和面部立体感。',
+    price: 259,
+    image: '/images/products/docx/con019-hoola-original.jpeg',
+    category: 'makeup',
+    tags: ['Docx导入', 'PCA推荐'],
+    season: 'all',
+    colorType: 'warm',
+    colorHex: '#8A684E',
+    colorName: '暖棕修容'
+  }
+]
+
+// 响应式产品列表
+const products = ref<any[]>([])
+const loading = ref(false)
+
+const loadProducts = async () => {
+  // 默认先展示 docx 商品，保证页面可见
+  products.value = [...docxProducts]
+  loading.value = true
+  console.log('>>> [Debug] 开始获取推荐商品列表...')
+  try {
+    const res = await getProductRecommendationsApi({
+      season: filterSeason.value || undefined,
+      category: filterCategory.value || undefined,
+      limit: 20
+    })
+    console.log('>>> [Debug] 推荐商品响应:', res)
+    const isSuccessCode = res?.code === 0 || res?.code === 200 || res?.code === undefined
+    const apiProducts = Array.isArray(res?.data?.products) ? res.data.products : []
+    if (isSuccessCode && apiProducts.length > 0) {
+      const normalizedApiProducts = apiProducts.map((p: any) => ({
+        id: p.id || p.sku_id,
+        sku: p.sku_id,
+        name: p.name,
+        desc: p.description,
+        price: p.price,
+        image: p.image_url,
+        category: p.category_name || 'makeup',
+        tags: p.tags || ['PCA推荐'],
+        season: p.season_suitability || 'all',
+        colorType: p.color_tone || 'neutral',
+        colorHex: p.color_hex,
+        colorName: p.color_name
+      }))
+
+      // 合并去重：同 sku 以后端数据为准，保留 docx 图文作兜底
+      const merged = [...docxProducts]
+      normalizedApiProducts.forEach((item: any) => {
+        const idx = merged.findIndex(p => p.sku === item.sku)
+        if (idx >= 0) {
+          merged[idx] = {
+            ...merged[idx],
+            ...item,
+            category: ['skincare', 'makeup', 'tools'].includes(item.category) ? item.category : 'makeup'
+          }
+        } else {
+          merged.push({
+            ...item,
+            category: ['skincare', 'makeup', 'tools'].includes(item.category) ? item.category : 'makeup'
+          })
+        }
+      })
+      products.value = merged
+    }
+  } catch (error) {
+    console.error('>>> [Debug] 获取推荐商品异常:', error)
+    ElMessage.warning('推荐接口暂不可用，已展示文档商品')
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
   if (route.query.season) filterSeason.value = route.query.season as string
   if (route.query.color) filterColor.value = route.query.color as string
+  loadProducts()
 })
 
 const expandedCategories = ref<Record<string, boolean>>({})
 
-const products = [
-  // tags, category, colorHex mocked data
-  { id: 1, sku: 'S1-CLN', name: '男士焕能洁面乳', desc: '深层清洁，控油保湿', price: '129', image: new URL('../assets/products/cleanser.jpg', import.meta.url).href, category: 'skincare', tags: ['新手友好', '日常通勤'], season: 'all', colorType: 'neutral' },
-  { id: 2, sku: 'S1-TNR', name: '清爽保湿爽肤水', desc: '收缩毛孔，醒肤补水', price: '159', image: new URL('../assets/products/toner.jpg', import.meta.url).href, category: 'skincare', tags: ['日常通勤'], season: 'all', colorType: 'neutral' },
-  { id: 3, sku: 'S1-CRM', name: '多效修护面霜', desc: '抗皱紧致，滋润不油腻', price: '299', image: new URL('../assets/products/cream.jpg', import.meta.url).href, category: 'skincare', tags: ['PCA推荐', '热门试妆'], season: 'all', colorType: 'neutral' },
-  { id: 4, sku: 'S2-BBC', name: '自然色男士BB霜', desc: '遮瑕修颜，持久不脱妆', price: '189', image: new URL('../assets/products/bb_cream.jpg', import.meta.url).href, category: 'makeup', colorHex: '#e8c39e', colorName: '自然偏白', tags: ['PCA推荐', '热门试妆'], season: 'spring', colorType: 'warm' },
-  { id: 5, sku: 'S2-SPY', name: '定型喷雾', desc: '持久定型，清爽自然', price: '89', image: new URL('../assets/products/spray.jpg', import.meta.url).href, category: 'tools', tags: ['新手友好'], season: 'all', colorType: 'neutral' },
-  { id: 6, sku: 'S2-BRW', name: '男士眉笔', desc: '立体塑形，防水防汗', price: '59', image: new URL('../assets/products/eyebrow_pencil.jpg', import.meta.url).href, category: 'makeup', colorHex: '#4a4036', colorName: '深棕灰', tags: ['PCA推荐', '新手友好'], season: 'winter', colorType: 'cool' },
-  { id: 7, sku: 'S3-AFT', name: '须后舒缓乳', desc: '舒缓修护，清凉止痛', price: '119', image: new URL('../assets/products/aftershave.jpg', import.meta.url).href, category: 'skincare', tags: ['日常通勤'], season: 'all', colorType: 'neutral' },
-  { id: 8, sku: 'S3-MSK', name: '男士专用面膜', desc: '深层补水，提亮肤色', price: '99', image: new URL('../assets/products/mask.jpg', import.meta.url).href, category: 'skincare', tags: ['热门试妆'], season: 'all', colorType: 'neutral' },
-]
+const cart = ref<any[]>([])
+const drawerVisible = ref(false)
+
+const totalPrice = computed(() => {
+  return cart.value.reduce((sum, item) => sum + Number(item.price), 0)
+})
 
 const getCategoryLabel = (cat: string | number) => {
   const map: Record<string, string> = {
@@ -216,9 +404,7 @@ const getCategoryLabel = (cat: string | number) => {
 
 const groupedProducts = computed(() => {
   // 1. 过滤
-  let filtered = products.filter(p => {
-    // mock mock seasons/color mappings 
-    // Usually these are from backend or user's PCA record in real life, but we mock the filtering here.
+  let filtered = products.value.filter(p => {
     if (filterSeason.value && p.season !== 'all' && p.season !== filterSeason.value) return false
     if (filterColor.value && p.colorType !== 'neutral' && p.colorType !== filterColor.value) return false
     if (filterCategory.value && p.category !== filterCategory.value) return false
@@ -236,7 +422,7 @@ const groupedProducts = computed(() => {
   })
 
   // 3. 分组
-  const groups: Record<string, typeof products> = {}
+  const groups: Record<string, any[]> = {}
   filtered.forEach(p => {
     if (!groups[p.category]) {
       groups[p.category] = []
@@ -253,13 +439,6 @@ const getVisibleProducts = (category: string | number, items: any[]) => {
   }
   return items.slice(0, 4)
 }
-
-const cart = ref<any[]>([])
-const drawerVisible = ref(false)
-
-const totalPrice = computed(() => {
-  return cart.value.reduce((sum, item) => sum + Number(item.price), 0)
-})
 
 const handleAddToCart = (product: any) => {
   cart.value.push({ ...product })

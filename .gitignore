@@ -1,35 +1,62 @@
-# Logs
-logs
+# ===== 前端 =====
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# ===== Python =====
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+
+# ===== 数据库与运行时文件 =====
+*.db
+*.db-journal
+backend/database/images/
+backend_new/database/images/
+
+# ===== 环境变量与敏感信息 =====
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ===== 日志 =====
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-# Node & Build
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor & System
-.vscode/*
-!.vscode/extensions.json
-.idea
+# ===== 编辑器与系统 =====
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Project Specific (Frontend Only)
-backend/
+# ===== 临时文件 =====
+*.tmp
+*.temp
+.cache/
+
+# ===== 测试与覆盖率 =====
+coverage/
+.coverage
+htmlcov/
+
+# ===== 其他 =====
 lh、skb测试结果/
-.venv/
-*.py
-*.docx
-*.pdf
-login/register.md
-# 如果需要保留 README，请确保不在此列

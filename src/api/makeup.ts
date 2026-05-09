@@ -1,87 +1,66 @@
-import request from '../utils/request'
+import request from '@/utils/request'
 
-/**
- * 一键妆容渲染接口 - 基于风格应用完整妆效
- * @param data { image_id: string, style: string }
- */
-export const applyFullStyle = (data: { image_id: string; style: string }) => {
-    return request({
-        url: '/api/makeup/apply-style',
-        method: 'post',
-        data
-    })
+export const createMakeupSessionApi = (data: any, isFormData = false) => {
+  console.log('>>> [Debug] request createMakeupSessionApi. isFormData:', isFormData)
+  return request({
+    url: '/api/makeup/session',
+    method: 'POST',
+    data,
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined
+  })
 }
 
-/**
- * 局部累加渲染接口 - 单独应用底妆、眉毛、眼妆等
- * @param data { image_id: string, step: 'base'|'eyebrow'|'eye'|'contour'|'lip', product_id?: number }
- */
-export const applyMakeupStep = (data: {
-    image_id: string;
-    step: 'base' | 'eyebrow' | 'eye' | 'contour' | 'lip';
-    product_id?: number | string
-}) => {
-    return request({
-        url: '/api/makeup/apply-step',
-        method: 'post',
-        data
-    })
+export const applyMakeupApi = (data: { session_id: string; product_id: string; category?: string }) => {
+  console.log('>>> [Debug] request applyMakeupApi:', data)
+  return request({ url: '/api/makeup/apply', method: 'POST', data })
 }
 
-/**
- * 撤销上一步操作接口
- * @param data { session_id: string }
- */
-export const undoMakeup = (data: { session_id: string }) => {
-    return request({
-        url: '/api/makeup/undo',
-        method: 'post',
-        data
-    })
+export const undoMakeupApi = (data: { session_id: string }) => {
+  console.log('>>> [Debug] request undoMakeupApi:', data)
+  return request({ url: '/api/makeup/undo', method: 'POST', data })
 }
 
-/**
- * 重置妆容接口 - 回到原始/矫正后的状态
- * @param data { session_id: string }
- */
-export const resetMakeup = (data: { session_id: string }) => {
-    return request({
-        url: '/api/makeup/reset',
-        method: 'post',
-        data
-    })
+export const resetMakeupApi = (data: { session_id: string }) => {
+  console.log('>>> [Debug] request resetMakeupApi:', data)
+  return request({ url: '/api/makeup/reset', method: 'POST', data })
 }
 
-/**
- * 获取套装推荐接口
- * @param params { season: string }
- */
-export const getSetRecommendations = (params: { season: string }) => {
-    return request({
-        url: '/api/makeup/sets',
-        method: 'get',
-        params
-    })
+export const resetPartMakeupApi = (data: { session_id: string; category: string }) => {
+  console.log('>>> [Debug] request resetPartMakeupApi:', data)
+  return request({ url: '/api/makeup/reset-part', method: 'POST', data })
 }
 
-/**
- * 保存妆容方案接口
- * @param data { name: string, image_id: string, configuration: any }
- */
-export const saveMakeupPlan = (data: { name: string; image_id: string; configuration: any }) => {
-    return request({
-        url: '/api/makeup/plan/save',
-        method: 'post',
-        data
-    })
+export const getStyleTemplatesApi = () => {
+  console.log('>>> [Debug] request getStyleTemplatesApi')
+  return request({ url: '/api/makeup/style-templates', method: 'GET' })
 }
 
-/**
- * 获取用户方案列表接口
- */
-export const getPlanList = () => {
-    return request({
-        url: '/api/makeup/plans',
-        method: 'get'
-    })
+export const saveMakeupSchemeApi = (data: any) => {
+  console.log('>>> [Debug] request saveMakeupSchemeApi:', data)
+  return request({ url: '/api/makeup/schemes', method: 'POST', data })
+}
+
+export const getMakeupSchemesApi = () => {
+  console.log('>>> [Debug] request getMakeupSchemesApi')
+  return request({ url: '/api/makeup/schemes', method: 'GET' })
+}
+
+export const getMakeupSchemeDetailApi = (scheme_id: string) => {
+  console.log('>>> [Debug] request getMakeupSchemeDetailApi:', scheme_id)
+  return request({ url: `/api/makeup/schemes/${scheme_id}`, method: 'GET' })
+}
+
+export const deleteMakeupSchemeApi = (scheme_id: string) => {
+  console.log('>>> [Debug] request deleteMakeupSchemeApi:', scheme_id)
+  return request({ url: `/api/makeup/schemes/${scheme_id}`, method: 'DELETE' })
+}
+
+export const getMakeupSessionApi = (session_id: string) => {
+  console.log('>>> [Debug] request getMakeupSessionApi:', session_id)
+  return request({ url: `/api/makeup/session/${session_id}`, method: 'GET' })
+}
+
+export const scoreMakeupApi = (data: { session_id: string }) => {
+  console.log('>>> [Debug] request scoreMakeupApi:', data)
+  return request({ url: '/api/makeup/score', method: 'POST', data })
 }

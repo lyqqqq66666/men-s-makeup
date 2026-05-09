@@ -2,12 +2,41 @@
   <div class="profile-container">
     <div class="profile-header">
       <div class="user-info">
-        <el-avatar :size="80" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" class="user-avatar" />
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :http-request="handleAvatarUpload"
+          accept="image/*"
+        >
+          <el-avatar :size="80" :src="userInfo.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" class="user-avatar" />
+          <div class="avatar-hover-mask">
+            <el-icon><Camera /></el-icon>
+          </div>
+        </el-upload>
         <div class="user-details">
-          <h2 class="user-name">智颜体验官</h2>
+          <div class="user-name-wrapper">
+            <h2 v-if="!isEditingNickname" class="user-name">{{ userInfo.nickname || '智颜用户' }}</h2>
+            <el-input 
+              v-else 
+              v-model="editNicknameValue" 
+              size="small" 
+              class="nickname-input"
+              @blur="saveNickname"
+              @keyup.enter="saveNickname"
+              ref="nicknameInputRef"
+            />
+            <el-icon class="edit-icon" @click="startEditNickname"><Edit /></el-icon>
+          </div>
           <div class="user-tags">
-            <span class="season-tag"><el-icon><MagicStick /></el-icon> 温润秋季型</span>
-            <span class="status-tag"><el-icon><Select /></el-icon> 今日诊断完成</span>
+            <span class="season-tag" v-if="userInfo.season_type || (userInfo as any).season">
+              <el-icon><MagicStick /></el-icon> {{ userInfo.season_type || (userInfo as any).season }}
+            </span>
+            <span class="season-tag placeholder" v-else>
+              <el-icon><MagicStick /></el-icon> 暂无季型数据
+            </span>
+            <span class="phone-tag">
+              <el-icon><Iphone /></el-icon> {{ userInfo.phone }}
+            </span>
           </div>
         </div>
       </div>
@@ -19,18 +48,20 @@
         <div class="profile-card photo-card">
           <div class="card-header">
             <h3>照片库</h3>
-            <el-button type="primary" link>查看全部</el-button>
+            <div class="header-actions">
+              <el-button type="success" link @click="loadUserData">刷新数据</el-button>
+              <el-button type="primary" link>查看全部</el-button>
+            </div>
           </div>
           <p class="card-desc">管理您的每一次颜值升级</p>
           <div class="photo-list">
-            <div class="photo-item">
-              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80" alt="photo1" />
-              <div class="photo-label success">已诊断 - 暖秋型</div>
-            </div>
-            <div class="photo-item">
-              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80" alt="photo2" />
-              <div class="photo-label pending">待诊断</div>
-            </div>
+            <template v-if="userImages.length > 0">
+              <div class="photo-item" v-for="img in userImages.slice(0, 5)" :key="img.image_id">
+                <el-image :src="img.url" fit="cover" :preview-src-list="userImages.map(i => i.url)" />
+                <div class="photo-label success" v-if="img.image_type === 'corrected'">已诊断</div>
+                <div class="photo-label pending" v-else>原图</div>
+              </div>
+            </template>
             <div class="photo-item upload-item" @click="router.push('/upload')">
               <el-icon><Plus /></el-icon>
               <span>上传新图</span>
@@ -107,14 +138,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, reactive, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { MagicStick, Select, Plus, ShoppingCart } from '@element-plus/icons-vue'
-
-const router = useRouter()
+import { MagicStick, Plus, ShoppingCart, Camera, Iphone, Edit } from '@element-plus/icons-vue'
+import { getUserInfoApi, getUserImagesApi, uploadAvatarApi, updateNicknameApi, type UserInfoData } from '@/api/user'
 import { ElMessage } from 'element-plus'
 
-// Mock logic
+const router = useRouter()
+
+// 用户信息
+const userInfo = reactive<Partial<UserInfoData> & { season?: string }>({
+  nickname: '',
+  avatar: '',
+  phone: '',
+  season_type: ''
+})
+
+// 昵称编辑状态
+const isEditingNickname = ref(false)
+const editNicknameValue = ref('')
+const nicknameInputRef = ref<any>(null)
+
+const startEditNickname = () => {
+  editNicknameValue.value = userInfo.nickname || ''
+  isEditingNickname.value = true
+  nextTick(() => {
+    nicknameInputRef.value?.focus()
+  })
+}
+
+const saveNickname = async () => {
+  if (!isEditingNickname.value) return
+  const newNickname = editNicknameValue.value.trim()
+  if (!newNickname || newNickname === userInfo.nickname) {
+    isEditingNickname.value = false
+    return
+  }
+  
+  console.log('>>> [Debug] 开始修改昵称:', newNickname)
+  try {
+    const res = await updateNicknameApi({ nickname: newNickname })
+    console.log('>>> [Debug] 修改昵称响应:', res)
+    if (res.code === 200) {
+      userInfo.nickname = newNickname
+      ElMessage.success('昵称修改成功')
+    }
+  } catch (error) {
+    console.error('>>> [Debug] 修改昵称异常:', error)
+    ElMessage.error('昵称修改失败')
+  } finally {
+    isEditingNickname.value = false
+  }
+}
+
+// 用户图片
+const userImages = ref<any[]>([])
+
+// 保存的方案 (目前仍使用 Mock，若后端有接口可替换为 getMakeupSchemesApi)
 const savedPlans = ref([
   {
     id: 1,
@@ -133,7 +213,54 @@ const savedPlans = ref([
     itemCount: 5
   }
 ])
+
 const cartItems = ref([])
+
+// 加载数据
+const loadUserData = async () => {
+  console.log('>>> [Debug] 开始同步远程 Mock 数据...')
+  try {
+    const infoRes = await getUserInfoApi()
+    console.log('>>> [Debug] 获取当前用户信息全量响应:', infoRes)
+    if (infoRes.code === 200) {
+      console.log('>>> [Debug] 提取到的 season_type:', infoRes.data.season_type)
+      Object.assign(userInfo, infoRes.data)
+      // 兼容性处理：有些 Mock 可能返回 season 字段
+      if (!userInfo.season_type && (infoRes.data as any).season) {
+        userInfo.season_type = (infoRes.data as any).season
+      }
+    }
+
+    const imgRes = await getUserImagesApi(10)
+    console.log('>>> [Debug] 获取用户图片列表响应:', imgRes)
+    if (imgRes.code === 200) {
+      userImages.value = imgRes.data.items
+    }
+  } catch (error) {
+    console.error('>>> [Debug] 接口调用异常:', error)
+    ElMessage.error('获取用户信息失败，请检查网络或登录状态')
+  }
+}
+
+// 处理头像上传
+const handleAvatarUpload = async (options: any) => {
+  console.log('>>> [Debug] 开始上传头像:', options.file.name)
+  try {
+    const res = await uploadAvatarApi(options.file)
+    console.log('>>> [Debug] 上传头像响应:', res)
+    if (res.code === 200) {
+      userInfo.avatar = res.data.avatar
+      ElMessage.success('头像上传成功')
+    }
+  } catch (error) {
+    console.error('>>> [Debug] 头像上传异常:', error)
+    ElMessage.error('头像上传失败')
+  }
+}
+
+onMounted(() => {
+  loadUserData()
+})
 
 const handleCart = (plan: any) => {
   ElMessage.success(`方案 ${plan.name} 的关联商品已加入购物车！`)
@@ -166,6 +293,32 @@ const handleCart = (plan: any) => {
 .user-avatar {
   border: 4px solid #f1f5f9;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.avatar-uploader {
+  position: relative;
+}
+
+.avatar-hover-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.avatar-uploader:hover .avatar-hover-mask {
+  opacity: 1;
 }
 
 .user-details {
@@ -174,11 +327,38 @@ const handleCart = (plan: any) => {
   gap: 8px;
 }
 
+.user-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .user-name {
   font-size: 28px;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
+}
+
+.nickname-input {
+  width: 200px;
+}
+
+.nickname-input :deep(.el-input__inner) {
+  font-size: 24px;
+  font-weight: 700;
+  height: 40px;
+}
+
+.edit-icon {
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.edit-icon:hover {
+  color: #3b82f6;
 }
 
 .user-tags {
@@ -201,9 +381,22 @@ const handleCart = (plan: any) => {
   color: #D97706;
 }
 
-.status-tag {
-  background: #ECFDF5;
-  color: #059669;
+.season-tag.placeholder {
+  background: #f1f5f9;
+  color: #94a3b8;
+  opacity: 0.6;
+}
+
+.phone-tag {
+  background: #f1f5f9;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .profile-content {
