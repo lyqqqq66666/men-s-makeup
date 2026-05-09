@@ -137,7 +137,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ModernBackground from '../components/ModernBackground.vue'
 import { ShoppingCart } from '@element-plus/icons-vue'
-import { getProducts, Product, CartItem } from '../api/products'
+import { getProducts } from '../api/products'
+import type { Product, CartItem } from '../api/products'
 
 const router = useRouter()
 const route = useRoute()
