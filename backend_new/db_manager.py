@@ -12,6 +12,93 @@ SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database
 _DB_WRITE_LOCK = threading.Lock()
 
 
+class DBWrapper:
+    """
+    包装 pymysql 连接，模拟 sqlite3.Connection 接口。
+    - 自动把 SQL 中的 ? 占位符转成 %s（pymysql 要求）
+    - 静默忽略 PRAGMA 语句（MySQL 不支持）
+    - row_factory 赋值被接受但不生效（DictCursor 已返回 dict）
+    """
+    def __init__(self, pymysql_conn):
+        self._conn = pymysql_conn
+        self._cursor = pymysql_conn.cursor()
+        self.row_factory = None
+        # 存储数据库名，供 _table_exists 等函数使用
+        self._db_name = getattr(pymysql_conn, 'db', None) or getattr(pymysql_conn, 'database', 'menx')
+
+    def _translate(self, sql: str):
+        s = sql.strip()
+        if s.upper().startswith("PRAGMA"):
+            return None
+        return sql.replace("?", "%s")
+
+    def execute(self, sql, params=None):
+        translated = self._translate(sql)
+        if translated is None:
+            self._last_result = None
+            return self
+        if params is None:
+            params = ()
+        self._cursor.execute(translated, params)
+        self._last_result = self._cursor
+        return self
+
+    def executemany(self, sql, params_seq):
+        translated = self._translate(sql)
+        if translated is None:
+            self._last_result = None
+            return self
+        self._cursor.executemany(translated, params_seq)
+        self._last_result = self._cursor
+        return self
+
+    def fetchone(self):
+        if self._last_result is None:
+            return None
+        return self._last_result.fetchone()
+
+    def fetchall(self):
+        if self._last_result is None:
+            return []
+        return self._last_result.fetchall()
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
+
+def _read_env():
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    cfg = {}
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    k, _, v = line.partition("=")
+                    cfg[k.strip()] = v.strip()
+    return cfg
+
+
+def _get_db_type():
+    t = os.getenv("DB_TYPE", "").lower()
+    if t:
+        return t
+    return _read_env().get("DB_TYPE", "sqlite").lower()
+
+
+
 def _row_to_dict(row):
     return dict(row) if row else None
 
@@ -34,17 +121,54 @@ def _to_json_safe(value):
         return value
     return str(value)
 
+
+
 def get_db_connection():
+    db_type = _get_db_type()
+    if db_type == "mysql":
+        import pymysql
+        cfg = _read_env()
+        db_host = cfg.get("DB_HOST", "localhost")
+        db_port = int(cfg.get("DB_PORT", "3306"))
+        db_name = cfg.get("DB_NAME", "menx")
+        db_user = cfg.get("DB_USER", "")
+        db_pass = cfg.get("DB_PASSWORD", "")
+        if not db_user:
+            raise RuntimeError("DB_TYPE=mysql 但 .env 中未设置 DB_USER")
+        raw_conn = pymysql.connect(
+            host=db_host,
+            port=db_port,
+            user=db_user,
+            password=db_pass,
+            database=db_name,
+            charset="utf8mb4",
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+        # 返回 DBWrapper（如果定义了）；否则直接返回 raw_conn
+        if "DBWrapper" in globals():
+            return DBWrapper(raw_conn)
+        return raw_conn
+    # SQLite（默认）
     conn = sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA foreign_keys = ON')
-    conn.execute('PRAGMA journal_mode = WAL')
-    conn.execute('PRAGMA synchronous = NORMAL')
-    conn.execute('PRAGMA busy_timeout = 30000')
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")
+    conn.execute("PRAGMA busy_timeout = 30000")
     return conn
 
 
 def _table_exists(conn, table_name: str) -> bool:
+    if isinstance(conn, DBWrapper):
+        # MySQL：通过 INFORMATION_SCHEMA 查询
+        db_name = conn._db_name or "menx"
+        conn.execute(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+            (db_name, table_name)
+        )
+        row = conn.fetchone()
+        return row is not None
+    # SQLite
     row = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
         (table_name,)
@@ -55,6 +179,16 @@ def _table_exists(conn, table_name: str) -> bool:
 def _get_column_names(conn, table_name: str) -> set:
     if not _table_exists(conn, table_name):
         return set()
+    if isinstance(conn, DBWrapper):
+        # MySQL：通过 INFORMATION_SCHEMA.COLUMNS 查询
+        db_name = conn._db_name or "menx"
+        conn.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+            (db_name, table_name)
+        )
+        rows = conn.fetchall()
+        return {r["COLUMN_NAME"] for r in rows}
+    # SQLite
     cols = conn.execute(f'PRAGMA table_info({table_name})').fetchall()
     return {c[1] for c in cols}
 
@@ -114,7 +248,12 @@ def _ensure_users_columns_before_schema(conn):
 
     场景：旧库 users 表没有 password_hash / phone 等字段，
     初始化阶段需要兜底补列。
+    MySQL 模式：表会由 schema_mysql_clean.sql 完整创建，不需要修补。
     """
+    # MySQL 模式：直接返回，不需要修补
+    db_type = _get_db_type()
+    if db_type == 'mysql':
+        return
     if not _table_exists(conn, 'users'):
         return
 
@@ -172,8 +311,40 @@ def init_db():
                     conn.execute(sql)
                 except Exception:
                     pass
-            with open(SCHEMA_PATH, 'r', encoding='utf-8') as f:
-                schema_sql = f.read().replace('PRAGMA foreign_keys = ON;\n', '', 1)
+            # 根据数据库类型选择 schema 文件
+            db_type = _get_db_type()
+            if db_type == 'mysql':
+                schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database', 'schema_mysql_clean.sql')
+            else:
+                schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database', 'schema.sql')
+            
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                raw_sql = f.read()
+
+            if db_type == 'mysql' and isinstance(conn, DBWrapper):
+                # MySQL 模式：逐条执行 SQL，跳过 PRAGMA
+                if isinstance(conn, DBWrapper):
+                    try:
+                        conn.execute('SET foreign_key_checks=0')
+                    except Exception as e:
+                        print(f"[init_db] Warning: Cannot disable foreign_key_checks: {e}")
+                for stmt in raw_sql.split(';'):
+                    stmt = stmt.strip()
+                    if not stmt or stmt.upper().startswith('PRAGMA'):
+                        continue
+                    try:
+                        conn.execute(stmt)
+                    except Exception as e:
+                        # 打印错误但不中断（如 IF NOT EXISTS 类的重复创建）
+                        print(f"[init_db] Warning: SQL execution error (continuing): {e}")
+                        print(f"[init_db] Statement: {stmt[:200]}")
+                if isinstance(conn, DBWrapper):
+                    try:
+                        conn.execute('SET foreign_key_checks=1')
+                    except Exception as e:
+                        print(f"[init_db] Warning: Cannot enable foreign_key_checks: {e}")
+            else:
+                schema_sql = raw_sql.replace('PRAGMA foreign_keys = ON;\n', '', 1)
                 for legacy_stmt in [
                     'DROP TABLE IF EXISTS makeup_images;\n',
                     'DROP TABLE IF EXISTS debug_images;\n',
@@ -199,7 +370,7 @@ def init_db():
                 ]:
                     schema_sql = schema_sql.replace(legacy_stmt, '')
                 conn.executescript(schema_sql)
-            conn.execute('PRAGMA foreign_keys = ON')
+                conn.execute('PRAGMA foreign_keys = ON')
             _run_migrations(conn)
             conn.commit()
         finally:
@@ -213,6 +384,11 @@ def init_db():
 
 def _run_migrations(conn):
     """兼容历史库结构，按需补齐字段/索引"""
+    # MySQL 模式：表已由 schema_mysql_clean.sql 完整创建，跳过所有迁移
+    db_type = _get_db_type()
+    if db_type == 'mysql':
+        print(f"[migrations] MySQL mode detected, skipping all migrations")
+        return
     cols = conn.execute("PRAGMA table_info(users)").fetchall()
     col_names = {c[1] for c in cols}
 
