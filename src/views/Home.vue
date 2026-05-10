@@ -92,7 +92,7 @@
           <div class="style-card" @click="goToMakeup('natural')">
             <div class="style-image">
               <div class="style-overlay"></div>
-              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=young%20asian%20man%20natural%20makeup%20fresh%20clean%20look%20professional%20portrait&image_size=portrait_4_3" alt="自然清透">
+              <img src="/images/styles/natural.png" alt="自然清透">
             </div>
             <div class="style-info">
               <h3>自然清透</h3>
@@ -102,7 +102,7 @@
           <div class="style-card" @click="goToMakeup('business')">
             <div class="style-image">
               <div class="style-overlay"></div>
-              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=young%20asian%20man%20business%20professional%20makeup%20confident%20portrait&image_size=portrait_4_3" alt="轻熟职场">
+              <img src="/images/styles/business.png" alt="轻熟职场">
             </div>
             <div class="style-info">
               <h3>轻熟职场</h3>
@@ -112,7 +112,7 @@
           <div class="style-card" @click="goToMakeup('korean')">
             <div class="style-image">
               <div class="style-overlay"></div>
-              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=young%20asian%20man%20korean%20style%20trendy%20makeup%20fashion%20portrait&image_size=portrait_4_3" alt="韩系潮流">
+              <img src="/images/styles/idol.png" alt="韩系潮流">
             </div>
             <div class="style-info">
               <h3>韩系潮流</h3>
@@ -309,6 +309,7 @@ onUnmounted(() => {})
   font-weight: 600 !important;
   border-radius: 50px !important;
   box-shadow: 0 10px 30px rgba(46, 125, 50, 0.3);
+  color: white !important;
 }
 
 .cta-secondary {

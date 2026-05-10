@@ -1,9 +1,9 @@
 <template>
   <div class="upload-view-container">
     <ModernBackground :enableLines="false" />
-    <div 
-      class="content-box" 
-      @mouseenter="isHovering = true" 
+    <div
+      class="content-box"
+      @mouseenter="isHovering = true"
       @mouseleave="isHovering = false"
     >
       <div class="back-btn-wrapper">
@@ -14,9 +14,37 @@
 
       <h2 class="page-title">上传人像照片</h2>
       <p class="page-subtitle">请上传一张清晰的正面人像照片，我们将为您进行智能矫正与美妆</p>
-      
+
       <div class="upload-area">
-        <ImageUpload @upload-success="handleUploadSuccess" />
+        <ImageUpload v-if="!showCamera" @upload-success="handleUploadSuccess" />
+        <CameraCapture
+          v-else
+          @capture-success="handleUploadSuccess"
+          @capture-cancel="showCamera = false"
+        />
+      </div>
+
+      <div class="mode-switch">
+        <el-button
+          v-if="!showCamera && supportsCamera"
+          type="primary"
+          plain
+          @click="showCamera = true"
+          class="camera-btn"
+        >
+          <el-icon><Camera /></el-icon>
+          拍照上传
+        </el-button>
+        <el-button
+          v-if="showCamera"
+          type="primary"
+          plain
+          @click="showCamera = false"
+          class="upload-btn"
+        >
+          <el-icon><Upload /></el-icon>
+          本地上传
+        </el-button>
       </div>
 
       <div class="tips-area">
@@ -32,16 +60,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ImageUpload from '../components/ImageUpload.vue'
+import CameraCapture from '../components/CameraCapture.vue'
 import ModernBackground from '../components/ModernBackground.vue'
-import { InfoFilled, ArrowLeft } from '@element-plus/icons-vue'
+import { InfoFilled, ArrowLeft, Camera, Upload } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElLoading } from 'element-plus'
 import { createMakeupSessionApi } from '@/api/makeup'
 
 const router = useRouter()
 const isHovering = ref(false)
+const showCamera = ref(false)
+const supportsCamera = ref(false)
+
+const checkCameraSupport = (): boolean => {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+}
+
+onMounted(() => {
+  supportsCamera.value = checkCameraSupport()
+})
 
 const handleUploadSuccess = async (data: { file: File, url: string }) => {
   const loading = ElLoading.service({
@@ -51,11 +90,11 @@ const handleUploadSuccess = async (data: { file: File, url: string }) => {
   })
 
   try {
-    console.log('>>> [Debug] UploadView handleUploadSuccess. File:', data.file.name)
+    console.log('>>> [Debug] UploadView handleUploadSuccess. File:', data.file.name, 'Source:', showCamera.value ? 'camera' : 'upload')
 
-    // 仅创建试妆 Session，跳过分析流程，直接进入化妆页
     const formData = new FormData()
     formData.append('image', data.file)
+    formData.append('source', showCamera.value ? 'camera' : 'upload')
 
     console.log('>>> [Debug] 准备调用 createMakeupSessionApi...')
     const sessionRes = await createMakeupSessionApi(formData, true) as any
@@ -73,6 +112,7 @@ const handleUploadSuccess = async (data: { file: File, url: string }) => {
     }
 
     ElMessage.success('上传成功，已进入化妆页')
+    showCamera.value = false
     router.push({
       name: 'Result',
       query: {
@@ -152,7 +192,28 @@ const handleUploadSuccess = async (data: { file: File, url: string }) => {
 }
 
 .upload-area {
+  margin-bottom: 20px;
+}
+
+.mode-switch {
+  display: flex;
+  justify-content: center;
   margin-bottom: 30px;
+  min-height: 40px;
+}
+
+.camera-btn,
+.upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.camera-btn:hover,
+.upload-btn:hover {
+  background-color: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  color: #10b981 !important;
 }
 
 .tips-area {

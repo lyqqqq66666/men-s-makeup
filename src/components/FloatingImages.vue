@@ -7,7 +7,6 @@
       :style="getItemStyle(index)"
     >
       <div class="image-wrapper">
-        <!-- Using placeholder images from unsplash for demo purposes -->
         <img :src="img.src" :alt="img.alt" />
       </div>
     </div>
@@ -25,8 +24,6 @@ const images = ref([
   { src: '/images/styles/5.png', alt: 'Portrait 5' },
 ])
 
-// Define zones to keep center clear (Left 25%-75% is restricted)
-// Zones: Top-Left, Top-Right, Mid-Left, Mid-Right, Bottom-Left, Bottom-Right
 const zones = [
   { topMin: 5, topMax: 20, leftMin: 5, leftMax: 15 },   // TL
   { topMin: 5, topMax: 20, leftMin: 80, leftMax: 90 },  // TR
@@ -39,7 +36,6 @@ const zones = [
 const assignedZones = ref<number[]>([])
 
 onMounted(() => {
-  // Shuffle zones
   const indices = zones.map((_, i) => i)
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -49,16 +45,14 @@ onMounted(() => {
 })
 
 const getItemStyle = (index: number) => {
-  // Get assigned zone or fallback to random if out of bounds
   const assignedIndex = assignedZones.value[index]
   const zoneIndex = assignedIndex !== undefined ? assignedIndex : index % zones.length
   const zone = zones[zoneIndex]
 
   if (!zone) {
-      return { display: 'none' } // Should not happen
+      return { display: 'none' }
   }
 
-  // Random position within the zone
   const top = zone.topMin + Math.random() * (zone.topMax - zone.topMin)
   const left = zone.leftMin + Math.random() * (zone.leftMax - zone.leftMin)
   
@@ -82,7 +76,7 @@ const getItemStyle = (index: number) => {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  pointer-events: none; /* Allow clicks to pass through */
+  pointer-events: none;
   z-index: 0;
 }
 

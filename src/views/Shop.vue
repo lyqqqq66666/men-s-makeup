@@ -10,7 +10,7 @@
         <div class="nav-actions">
           <el-button type="text" class="nav-btn" @click="router.push('/')">返回首页</el-button>
           
-          <div class="cart-icon-wrapper" @click="drawerVisible = true">
+          <div class="cart-icon-wrapper" @click="openCartDrawer">
             <el-badge :value="cart.length" :hidden="cart.length === 0" class="cart-badge">
               <el-button circle :icon="ShoppingCart" class="header-cart-btn"></el-button>
             </el-badge>
@@ -190,6 +190,10 @@ const removeFromCart = (productId: number) => {
   localStorage.setItem('cart', JSON.stringify(cart.value))
 }
 
+const openCartDrawer = () => {
+  drawerVisible.value = true
+}
+
 const checkout = () => {
   alert('结算功能开发中')
 }
@@ -246,28 +250,38 @@ onMounted(() => {
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
+  margin-left: auto;
 }
 
 .nav-btn {
   color: #64748b;
   font-weight: 500;
+  padding: 8px 16px;
 }
 
 .cart-icon-wrapper {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.2s;
 }
 
-.cart-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
+.cart-icon-wrapper:hover {
+  background-color: rgba(46, 125, 50, 0.1);
 }
 
 .header-cart-btn {
   font-size: 24px;
   color: #2E7D32;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
 }
 
 .main-content {
