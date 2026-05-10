@@ -46,7 +46,7 @@ export interface LoginResponseData {
  * @param data 登录参数
  */
 export const loginApi = (data: LoginParams) => {
-    return request.post<any, ApiResponse<LoginResponseData>>('/api/auth/login', data)
+    return request.post<any, ApiResponse<LoginResponseData>>('/auth/login', data)
 }
 
 /**
@@ -54,7 +54,7 @@ export const loginApi = (data: LoginParams) => {
  * @param data 注册参数
  */
 export const registerApi = (data: RegisterParams) => {
-    return request.post<any, ApiResponse<any>>('/api/auth/register', data)
+    return request.post<any, ApiResponse<any>>('/auth/register', data)
 }
 
 /**
@@ -63,14 +63,14 @@ export const registerApi = (data: RegisterParams) => {
  * @param type 用途类型 (register, login, reset_password)
  */
 export const getVerificationCodeApi = (phone: string, type: 'register' | 'login' | 'reset_password') => {
-    return request.post<any, ApiResponse<{ code_id: string }>>('/api/auth/send-code', { phone, type })
+    return request.post<any, ApiResponse<{ code_id: string }>>('/auth/send-code', { phone, type })
 }
 
 /**
  * 用户退出登录
  */
 export const logoutApi = () => {
-    return request.post<any, ApiResponse<null>>('/api/auth/logout')
+    return request.post<any, ApiResponse<null>>('/auth/logout')
 }
 
 /**
@@ -78,5 +78,5 @@ export const logoutApi = () => {
  * @param data 重置参数
  */
 export const resetPasswordApi = (data: ResetPasswordParams) => {
-    return request.post<any, ApiResponse<null>>('/api/auth/reset-password', data)
+    return request.post<any, ApiResponse<null>>('/auth/reset-password', data)
 }
